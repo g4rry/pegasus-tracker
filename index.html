@@ -20,7 +20,7 @@
             overflow-x: hidden;
         }
 
-        /* Map container at top */
+        /* Map container at top - 70% height */
         #map {
             height: 70vh;
             width: 100%;
@@ -29,26 +29,32 @@
             z-index: 1;
         }
 
-        .map-controls {
+        /* Nautical chart styling */
+        .leaflet-container {
+            background: #a8d8f0 !important;
+        }
+
+        .leaflet-tile-pane {
+            filter: sepia(10%) saturate(120%) hue-rotate(180deg) brightness(95%);
+        }
+
+        /* Chart grid overlay */
+        .chart-grid {
             position: absolute;
-            bottom: 15px;
-            left: 15px;
-            z-index: 1000;
-            background: rgba(0,0,0,0.85);
-            padding: 15px;
-            border-radius: 12px;
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(59, 130, 246, 0.3);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
-            max-width: 200px;
-            transform: translateX(-100%);
-            transition: transform 0.3s ease;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 50;
+            background-image: 
+                linear-gradient(rgba(0,0,0,0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,0,0,0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            opacity: 0.3;
         }
 
-        .map-controls.open {
-            transform: translateX(0);
-        }
-
+        /* Burger menu for layer controls */
         .burger-menu {
             position: absolute;
             bottom: 15px;
@@ -91,6 +97,27 @@
             transform: rotate(-45deg) translate(7px, -6px);
         }
 
+        /* Hidden layer controls */
+        .map-controls {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            z-index: 1000;
+            background: rgba(0,0,0,0.85);
+            padding: 15px;
+            border-radius: 12px;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+            max-width: 200px;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+
+        .map-controls.open {
+            transform: translateX(0);
+        }
+
         .map-controls h4 {
             margin: 0 0 10px 0;
             color: #60a5fa;
@@ -121,6 +148,7 @@
             accent-color: #3b82f6;
         }
 
+        /* Connection status */
         .connection-status {
             position: absolute;
             top: 15px;
@@ -144,7 +172,6 @@
             padding: 20px;
             text-align: center;
             box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-            position: relative;
         }
 
         .header h1 {
@@ -164,6 +191,7 @@
             font-weight: 500;
         }
 
+        /* Controls below header */
         .controls {
             background: linear-gradient(135deg, #1e3a8a, #1565c0);
             padding: 20px;
@@ -206,17 +234,6 @@
             outline: none;
         }
 
-        .duration-display {
-            padding: 10px 14px;
-            background: rgba(30, 41, 59, 0.8);
-            border: 2px solid #059669;
-            border-radius: 8px;
-            color: #10b981;
-            font-weight: bold;
-            min-width: 180px;
-            text-align: center;
-        }
-
         button {
             padding: 12px 24px;
             background: linear-gradient(135deg, #059669, #047857);
@@ -230,6 +247,7 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
             font-size: 14px;
+            min-width: 180px;
         }
 
         button:hover {
@@ -238,13 +256,17 @@
             background: linear-gradient(135deg, #10b981, #059669);
         }
 
-        button:disabled {
-            background: #374151;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
+        button.stop {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
         }
 
+        button.stop:hover {
+            background: linear-gradient(135deg, #f87171, #ef4444);
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.6);
+        }
+
+        /* Info panel */
         .info-panel {
             background: linear-gradient(135deg, #1e3a8a, #1565c0);
             padding: 20px;
@@ -308,6 +330,7 @@
             font-size: 1.1em;
         }
 
+        /* Vessel markers */
         .hourly-waypoint {
             width: 10px;
             height: 10px;
@@ -342,6 +365,12 @@
             }
         }
 
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Popup styling */
         .leaflet-popup-content {
             color: #1e293b;
             font-weight: 500;
@@ -367,6 +396,7 @@
             border-bottom: none;
         }
 
+        /* Footer */
         .footer {
             background: linear-gradient(135deg, #0a1929, #1e3a8a);
             padding: 15px;
@@ -402,88 +432,13 @@
                 gap: 15px;
             }
             
-            .map-controls {
-                position: relative;
-                margin: 10px;
-                width: calc(100% - 20px);
-                max-width: none;
-            }
-            
             .vessel-info {
                 grid-template-columns: 1fr;
             }
             
-            input[type="datetime-local"], .duration-display {
+            input[type="datetime-local"], button {
                 min-width: 160px;
             }
-        }
-
-        /* Map styling for nautical chart appearance */
-        .leaflet-container {
-            background: #a8d8f0 !important; /* Light blue water color */
-        }
-
-        .leaflet-tile-pane {
-            filter: sepia(10%) saturate(120%) hue-rotate(180deg) brightness(95%);
-        }
-
-        /* Navigation marker styling */
-        .nav-marker {
-            font-family: 'Segoe UI', Arial, sans-serif !important;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.8) !important;
-        }
-
-        .hazard-marker {
-            font-family: 'Segoe UI', Arial, sans-serif !important;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.8) !important;
-        }
-
-        /* Chart grid overlay */
-        .chart-grid {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 50;
-            background-image: 
-                linear-gradient(rgba(0,0,0,0.1) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0,0,0,0.1) 1px, transparent 1px);
-            background-size: 50px 50px;
-            opacity: 0.3;
-        }
-        .loading {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 2000;
-            background: rgba(0,0,0,0.8);
-            padding: 20px;
-            border-radius: 10px;
-            color: white;
-            font-size: 14px;
-        }
-
-        .spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #3b82f6;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 10px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
         }
     </style>
 </head>
@@ -492,7 +447,7 @@
     <div id="map">
         <div class="chart-grid"></div>
         
-        <div class="burger-menu" id="burgerMenu" onclick="toggleLayerControls()">
+        <div class="burger-menu" id="burgerMenu">
             <div class="burger-line"></div>
             <div class="burger-line"></div>
             <div class="burger-line"></div>
@@ -513,11 +468,6 @@
         <div id="connectionStatus" class="connection-status status-disconnected">
             ⚫ Ready to Track
         </div>
-
-        <div id="loadingIndicator" class="loading" style="display: none;">
-            <div class="spinner"></div>
-            Loading charts...
-        </div>
     </div>
 
     <!-- Header below map -->
@@ -535,12 +485,8 @@
             <input type="datetime-local" id="startTime" value="2025-06-27T03:39">
         </div>
         <div class="control-group">
-            <label>Track Duration</label>
-            <div class="duration-display" id="durationDisplay">Open Duration</div>
-        </div>
-        <div class="control-group">
             <label>Control</label>
-            <button id="trackButton" onclick="startTracking()">Start Live Tracking</button>
+            <button id="trackButton">Start Live Tracking</button>
         </div>
     </div>
 
@@ -550,7 +496,7 @@
         <div class="track-info">
             <strong>Chart Coverage:</strong> Dover Strait (Margate ↔ Boulogne-sur-Mer/Calais)<br>
             <strong>Tracking Mode:</strong> Open Duration - Continuous Monitoring<br>
-            <strong>Chart Source:</strong> OpenStreetMap Marine Features + Simulated AIS Data<br>
+            <strong>Chart Source:</strong> OpenStreetMap + Manual Navigation Markers<br>
             <strong>Start Time:</strong> <span id="trackStartDisplay">27 June 2025, 03:39 BST</span><br>
             <strong>Elapsed Time:</strong> <span class="elapsed-time" id="elapsedTime">--:--:--</span>
         </div>
@@ -595,67 +541,41 @@
         let trackStartTime = null;
         let elapsedTimeInterval = null;
         let currentPositionMarker = null;
+        let navigationMarkers = [];
+        let hazardMarkers = [];
 
         // Dover Strait bounds
         const doverStraitBounds = [
-            [50.8, 1.0],   // Southwest
-            [51.5, 1.8]    // Northeast
+            [50.8, 1.0],
+            [51.5, 1.8]
         ];
 
         // Initialize map
         function initializeMap() {
             try {
-                // Show loading
-                document.getElementById('loadingIndicator').style.display = 'block';
-
-                // Create map
                 map = L.map('map', {
                     preferCanvas: true,
                     zoomControl: true
                 }).fitBounds(doverStraitBounds);
 
-                // Base OpenStreetMap layer - reliable and always works
+                // OpenStreetMap base layer
                 const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     attribution: '© OpenStreetMap contributors',
                     maxZoom: 18
                 });
 
-                // Add base layer
                 osmLayer.addTo(map);
 
-                // Add chart grid overlay for nautical chart appearance
-                const chartGrid = document.querySelector('.chart-grid');
-                if (chartGrid) {
-                    chartGrid.style.display = 'block';
-                }
-
-                // Store layer references
-                window.layers = {
-                    osm: osmLayer
-                };
-
-                // Layer controls
                 setupLayerControls();
-
-                // Add manual navigation markers
                 addNavigationMarkers();
 
-                // Hide loading
-                setTimeout(() => {
-                    document.getElementById('loadingIndicator').style.display = 'none';
-                }, 500);
-
-                console.log('Map initialized successfully with OSM');
-
+                console.log('Map initialized successfully');
             } catch (error) {
                 console.error('Map initialization error:', error);
-                document.getElementById('loadingIndicator').innerHTML = '<div style="color: #ef4444;">Map failed to load. Retrying...</div>';
-                
-                // Retry after 2 seconds
-                setTimeout(initializeMap, 2000);
             }
         }
 
+        // Toggle layer controls
         function toggleLayerControls() {
             const controls = document.getElementById('mapControls');
             const burger = document.getElementById('burgerMenu');
@@ -664,23 +584,22 @@
             burger.classList.toggle('open');
         }
 
+        // Setup layer controls
         function setupLayerControls() {
-            // Navigation markers control
+            document.getElementById('burgerMenu').addEventListener('click', toggleLayerControls);
+
             document.getElementById('navigationLayer').addEventListener('change', function() {
                 toggleNavigationMarkers(this.checked);
             });
 
-            // Hazards control
             document.getElementById('hazardLayer').addEventListener('change', function() {
                 toggleHazardMarkers(this.checked);
             });
         }
 
-        let navigationMarkers = [];
-        let hazardMarkers = [];
-
+        // Add navigation markers
         function addNavigationMarkers() {
-            // Enhanced navigation aids and ports with more detail
+            // Navigation aids
             const navigationAids = [
                 { name: "Dover Port", pos: [51.1279, 1.3134], type: "major_port", description: "Major ferry terminal to Calais" },
                 { name: "Calais Port", pos: [50.9513, 1.8587], type: "major_port", description: "French ferry terminal from Dover" },
@@ -688,40 +607,33 @@
                 { name: "Calais West Pier Lt", pos: [50.9558, 1.8520], type: "light", description: "Fl.G.4s - Port approach light" },
                 { name: "South Goodwin LV", pos: [51.1667, 1.5333], type: "lightvessel", description: "Q.R - Light vessel marking Goodwin Sands" },
                 { name: "Dover TSS Entry", pos: [51.0500, 1.4500], type: "waypoint", description: "Traffic separation scheme entry point" },
-                { name: "East Goodwin Buoy", pos: [51.2000, 1.6000], type: "buoy", description: "Q(3)10s - East cardinal buoy" },
-                { name: "Dover Patrol Anch", pos: [51.0833, 1.3833], type: "anchor", description: "Anchorage area - Depth 12-20m" },
-                { name: "Calais Approach", pos: [50.9700, 1.8200], type: "waypoint", description: "Recommended approach route" },
-                { name: "Varne Bank", pos: [50.9500, 1.4500], type: "bank", description: "Shoal area - Min depth 8m" }
+                { name: "East Goodwin Buoy", pos: [51.2000, 1.6000], type: "buoy", description: "Q(3)10s - East cardinal buoy" }
             ];
 
             navigationAids.forEach(aid => {
-                let icon, color, size;
+                let icon, color;
                 
                 switch(aid.type) {
                     case 'major_port':
-                        icon = '🏢'; color = '#10b981'; size = '12px'; break;
+                        icon = '🏢'; color = '#10b981'; break;
                     case 'light':
-                        icon = '💡'; color = '#fbbf24'; size = '11px'; break;
+                        icon = '💡'; color = '#fbbf24'; break;
                     case 'lightvessel':
-                        icon = '🚢'; color = '#f59e0b'; size = '11px'; break;
+                        icon = '🚢'; color = '#f59e0b'; break;
                     case 'buoy':
-                        icon = '🔴'; color = '#ef4444'; size = '10px'; break;
+                        icon = '🔴'; color = '#ef4444'; break;
                     case 'waypoint':
-                        icon = '📍'; color = '#3b82f6'; size = '10px'; break;
-                    case 'anchor':
-                        icon = '⚓'; color = '#8b5cf6'; size = '10px'; break;
-                    case 'bank':
-                        icon = '🟤'; color = '#a16207'; size = '10px'; break;
+                        icon = '📍'; color = '#3b82f6'; break;
                     default:
-                        icon = '⚓'; color = '#6b7280'; size = '10px';
+                        icon = '⚓'; color = '#6b7280';
                 }
                 
                 const marker = L.marker(aid.pos, {
                     icon: L.divIcon({
-                        html: `<div style="background: ${color}; color: white; padding: 2px 5px; border-radius: 6px; font-size: ${size}; font-weight: bold; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.4); border: 1px solid white; text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">${icon} ${aid.name}</div>`,
+                        html: `<div style="background: ${color}; color: white; padding: 2px 5px; border-radius: 6px; font-size: 10px; font-weight: bold; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.4); border: 1px solid white; text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">${icon} ${aid.name}</div>`,
                         className: 'nav-marker',
-                        iconSize: [120, 20],
-                        iconAnchor: [60, 10]
+                        iconSize: [120, 18],
+                        iconAnchor: [60, 9]
                     })
                 }).addTo(map);
 
@@ -738,46 +650,10 @@
                 navigationMarkers.push(marker);
             });
 
-            // Add depth markings
-            addDepthMarkings();
-
-            // Add hazard markers
             addHazardMarkers();
         }
 
-        function addDepthMarkings() {
-            // Add depth soundings for nautical chart realism
-            const depthSoundings = [
-                { pos: [51.1000, 1.4000], depth: "15" },
-                { pos: [51.0800, 1.4500], depth: "22" },
-                { pos: [51.0600, 1.5000], depth: "18" },
-                { pos: [51.1200, 1.5000], depth: "12" },
-                { pos: [51.1500, 1.5500], depth: "8" },
-                { pos: [50.9800, 1.7000], depth: "25" },
-                { pos: [50.9600, 1.7500], depth: "20" }
-            ];
-
-            depthSoundings.forEach(sounding => {
-                const marker = L.marker(sounding.pos, {
-                    icon: L.divIcon({
-                        html: `<div style="color: #1e40af; font-size: 10px; font-weight: bold; text-shadow: 1px 1px 2px rgba(255,255,255,0.8); font-family: monospace;">${sounding.depth}</div>`,
-                        className: 'depth-marking',
-                        iconSize: [20, 15],
-                        iconAnchor: [10, 8]
-                    })
-                }).addTo(map);
-
-                marker.bindPopup(`
-                    <div style="text-align: center;">
-                        <h4 style="margin: 0; color: #1e40af;">Depth Sounding</h4>
-                        <p style="margin: 5px 0 0 0; font-size: 1.2em; font-weight: bold;">${sounding.depth} meters</p>
-                    </div>
-                `);
-
-                navigationMarkers.push(marker);
-            });
-        }
-
+        // Add hazard markers
         function addHazardMarkers() {
             const hazards = [
                 { name: "Goodwin Sands", pos: [51.2167, 1.5833], description: "Dangerous sandbank - Ship graveyard" },
@@ -788,10 +664,10 @@
             hazards.forEach(hazard => {
                 const marker = L.marker(hazard.pos, {
                     icon: L.divIcon({
-                        html: `<div style="background: #ef4444; color: white; padding: 3px 6px; border-radius: 8px; font-size: 10px; font-weight: bold; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.3); border: 1px solid white; animation: blink 2s infinite;">⚠️ ${hazard.name}</div>`,
+                        html: `<div style="background: #ef4444; color: white; padding: 2px 5px; border-radius: 6px; font-size: 10px; font-weight: bold; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.3); border: 1px solid white; animation: blink 2s infinite;">⚠️ ${hazard.name}</div>`,
                         className: 'hazard-marker',
-                        iconSize: [140, 24],
-                        iconAnchor: [70, 12]
+                        iconSize: [120, 18],
+                        iconAnchor: [60, 9]
                     })
                 }).addTo(map);
 
@@ -809,6 +685,7 @@
             });
         }
 
+        // Toggle markers
         function toggleNavigationMarkers(show) {
             navigationMarkers.forEach(marker => {
                 if (show) {
@@ -829,6 +706,7 @@
             });
         }
 
+        // Connection status
         function updateConnectionStatus(status) {
             const statusEl = document.getElementById('connectionStatus');
             statusEl.className = `connection-status status-${status}`;
@@ -841,16 +719,21 @@
             statusEl.textContent = statusText[status];
         }
 
+        // Elapsed time counter
         function startElapsedTimeCounter() {
             elapsedTimeInterval = setInterval(() => {
                 if (trackStartTime && isTracking) {
-                    const elapsed = Date.now() - trackStartTime;
-                    const hours = Math.floor(elapsed / (1000 * 60 * 60));
-                    const minutes = Math.floor((elapsed % (1000 * 60 * 60)) / (1000 * 60));
-                    const seconds = Math.floor((elapsed % (1000 * 60)) / 1000);
+                    const now = Date.now();
+                    const userStartTime = new Date(document.getElementById('startTime').value).getTime();
+                    const elapsed = now - userStartTime;
                     
+                    const hours = Math.floor(Math.abs(elapsed) / (1000 * 60 * 60));
+                    const minutes = Math.floor((Math.abs(elapsed) % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((Math.abs(elapsed) % (1000 * 60)) / 1000);
+                    
+                    const prefix = elapsed < 0 ? '-' : '';
                     document.getElementById('elapsedTime').textContent = 
-                        `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                        `${prefix}${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
                 }
             }, 1000);
         }
@@ -862,45 +745,40 @@
             }
         }
 
+        // Tracking functions
         function startTracking() {
-            try {
-                const button = document.getElementById('trackButton');
-                
-                if (isTracking) {
-                    stopTracking();
-                    return;
-                }
-
-                const startTimeInput = document.getElementById('startTime');
-                if (!startTimeInput || !startTimeInput.value) {
-                    alert('Please enter valid start time');
-                    return;
-                }
-
-                const startTime = new Date(startTimeInput.value);
-                if (isNaN(startTime.getTime())) {
-                    alert('Invalid date format');
-                    return;
-                }
-
-                trackStartTime = Date.now();
-                isTracking = true;
-                button.textContent = 'Stop Tracking';
-                button.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
-                button.style.boxShadow = '0 4px 15px rgba(239, 68, 68, 0.4)';
-                
-                startElapsedTimeCounter();
-                updateConnectionStatus('demo');
-                
-                // Start simulation immediately
-                simulateVesselData();
-                
-            } catch (error) {
-                console.error('Error in startTracking:', error);
-                alert('Error starting tracking: ' + error.message);
-                isTracking = false;
-                updateConnectionStatus('disconnected');
+            const button = document.getElementById('trackButton');
+            
+            if (isTracking) {
+                stopTracking();
+                return;
             }
+
+            const startTimeInput = document.getElementById('startTime');
+            if (!startTimeInput.value) {
+                alert('Please enter a start time');
+                return;
+            }
+
+            trackStartTime = Date.now();
+            isTracking = true;
+            button.textContent = 'Stop Tracking';
+            button.classList.add('stop');
+            
+            startElapsedTimeCounter();
+            updateConnectionStatus('demo');
+            
+            // Update start time display
+            const startDate = new Date(startTimeInput.value);
+            document.getElementById('trackStartDisplay').textContent = startDate.toLocaleString('en-GB', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            }) + ' BST';
+            
+            simulateVesselData();
         }
 
         function stopTracking() {
@@ -908,80 +786,4 @@
             
             const button = document.getElementById('trackButton');
             button.textContent = 'Start Live Tracking';
-            button.style.background = 'linear-gradient(135deg, #059669, #047857)';
-            button.style.boxShadow = '0 4px 15px rgba(5, 150, 105, 0.4)';
             
-            stopElapsedTimeCounter();
-            updateConnectionStatus('disconnected');
-        }
-
-        function simulateVesselData() {
-            updateVesselInfo({
-                status: '🟡 Demo Mode - Simulated Data',
-                position: 'Generating vessel movement...',
-                lastUpdate: new Date().toLocaleString()
-            });
-
-            // Simulated Dover Strait crossing
-            const samplePositions = [
-                { lat: 51.1279, lng: 1.3134, speed: 12.5, course: 95, timestamp: new Date(), heading: 95, destination: "Calais" },
-                { lat: 51.1150, lng: 1.4200, speed: 13.2, course: 98, timestamp: new Date(Date.now() + 1800000), heading: 98, destination: "Calais" },
-                { lat: 51.1000, lng: 1.5500, speed: 11.8, course: 102, timestamp: new Date(Date.now() + 3600000), heading: 102, destination: "Calais" },
-                { lat: 50.9800, lng: 1.6800, speed: 10.5, course: 105, timestamp: new Date(Date.now() + 5400000), heading: 105, destination: "Calais" },
-                { lat: 50.9513, lng: 1.8587, speed: 8.0, course: 0, timestamp: new Date(Date.now() + 7200000), heading: 0, destination: "Calais Port" }
-            ];
-
-            samplePositions.forEach((pos, index) => {
-                setTimeout(() => {
-                    if (isTracking) {
-                        addVesselPosition(pos);
-                    }
-                }, index * 3000); // 3 second intervals
-            });
-        }
-
-        function addVesselPosition(position) {
-            vesselPositions.push(position);
-            
-            // Update track polyline
-            const trackPoints = vesselPositions.map(pos => [pos.lat, pos.lng]);
-            
-            if (trackPolyline) {
-                map.removeLayer(trackPolyline);
-            }
-            
-            trackPolyline = L.polyline(trackPoints, {
-                color: '#3b82f6',
-                weight: 3,
-                opacity: 0.8,
-                smoothFactor: 1
-            }).addTo(map);
-
-            // Add hourly waypoint if needed
-            if (shouldAddHourlyWaypoint(position)) {
-                addHourlyWaypoint(position);
-                lastHourlyPosition = position;
-            }
-
-            // Update current position marker
-            updateCurrentPositionMarker(position);
-            
-            // Update info panel
-            updateVesselInfo({
-                status: '🟡 Demo Mode - Simulated Data',
-                position: `${position.lat.toFixed(6)}°, ${position.lng.toFixed(6)}°`,
-                speed: `${position.speed.toFixed(1)} knots`,
-                course: `${position.course.toFixed(0)}° ${getDirectionFromBearing(position.course)}`,
-                destination: position.destination,
-                lastUpdate: position.timestamp.toLocaleString(),
-                totalWaypoints: hourlyMarkers.length
-            });
-
-            // Pan map to follow vessel
-            map.panTo([position.lat, position.lng]);
-        }
-
-        function shouldAddHourlyWaypoint(position) {
-            if (!lastHourlyPosition) return true;
-            
-            const hoursSinceLastWaypoint = (position.timestamp - lastHourlyPosition.timestamp)
