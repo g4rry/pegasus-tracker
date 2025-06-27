@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pegasus Vessel Tracker - Dover Strait</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚓</text></svg>">
     <style>
         * {
@@ -20,168 +20,81 @@
             overflow-x: hidden;
         }
 
-        .header {
-            background: linear-gradient(135deg, #1565c0, #0d47a1);
-            padding: 20px;
-            text-align: center;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .header::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-            animation: float 6s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-20px); }
-        }
-
-        .header h1 {
-            font-size: 2.8em;
-            color: #e3f2fd;
-            text-shadow: 2px 2px 8px rgba(0,0,0,0.7);
-            margin-bottom: 10px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .vessel-badge {
-            background: rgba(255,255,255,0.15);
-            padding: 12px 25px;
-            border-radius: 30px;
-            display: inline-block;
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(255,255,255,0.2);
-            font-weight: 500;
-            position: relative;
-            z-index: 1;
-        }
-
-        .github-info {
-            background: rgba(16, 185, 129, 0.1);
-            padding: 15px;
-            margin: 20px auto;
-            border-radius: 10px;
-            max-width: 600px;
-            border: 1px solid rgba(16, 185, 129, 0.3);
-            text-align: center;
-        }
-
-        .controls {
-            background: linear-gradient(135deg, #1e3a8a, #1565c0);
-            padding: 25px;
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            flex-wrap: wrap;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
-
-        .control-group {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .control-group label {
-            font-weight: bold;
-            color: #e3f2fd;
-            font-size: 0.95em;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        input[type="datetime-local"] {
-            padding: 12px 16px;
-            border: 2px solid #3b82f6;
-            border-radius: 10px;
-            background: rgba(30, 41, 59, 0.8);
-            color: #e3f2fd;
-            font-size: 14px;
-            min-width: 200px;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
-        }
-
-        input[type="datetime-local"]:focus {
-            border-color: #60a5fa;
-            box-shadow: 0 0 15px rgba(96, 165, 250, 0.4);
-            outline: none;
-            transform: translateY(-2px);
-        }
-
-        .duration-display {
-            padding: 12px 16px;
-            background: rgba(30, 41, 59, 0.8);
-            border: 2px solid #059669;
-            border-radius: 10px;
-            color: #10b981;
-            font-weight: bold;
-            min-width: 200px;
-            text-align: center;
-            backdrop-filter: blur(10px);
-        }
-
-        button {
-            padding: 14px 28px;
-            background: linear-gradient(135deg, #059669, #047857);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            box-shadow: 0 6px 20px rgba(5, 150, 105, 0.4);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-size: 14px;
-        }
-
-        button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(5, 150, 105, 0.6);
-            background: linear-gradient(135deg, #10b981, #059669);
-        }
-
-        button:active {
-            transform: translateY(-1px);
-        }
-
+        /* Map container at top */
         #map {
-            height: 60vh;
+            height: 70vh;
             width: 100%;
-            border-top: 3px solid #3b82f6;
             position: relative;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            z-index: 1;
         }
 
         .map-controls {
             position: absolute;
-            top: 15px;
+            bottom: 15px;
             left: 15px;
             z-index: 1000;
             background: rgba(0,0,0,0.85);
-            padding: 20px;
-            border-radius: 15px;
-            backdrop-filter: blur(20px);
+            padding: 15px;
+            border-radius: 12px;
+            backdrop-filter: blur(15px);
             border: 1px solid rgba(59, 130, 246, 0.3);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+            max-width: 200px;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+
+        .map-controls.open {
+            transform: translateX(0);
+        }
+
+        .burger-menu {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            z-index: 1001;
+            background: rgba(0,0,0,0.85);
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .burger-menu:hover {
+            background: rgba(59, 130, 246, 0.2);
+        }
+
+        .burger-line {
+            width: 20px;
+            height: 2px;
+            background: #60a5fa;
+            margin: 2px 0;
+            transition: all 0.3s ease;
+        }
+
+        .burger-menu.open .burger-line:nth-child(1) {
+            transform: rotate(45deg) translate(5px, 5px);
+        }
+
+        .burger-menu.open .burger-line:nth-child(2) {
+            opacity: 0;
+        }
+
+        .burger-menu.open .burger-line:nth-child(3) {
+            transform: rotate(-45deg) translate(7px, -6px);
         }
 
         .map-controls h4 {
-            margin: 0 0 15px 0;
+            margin: 0 0 10px 0;
             color: #60a5fa;
-            font-size: 0.9em;
+            font-size: 0.85em;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             text-align: center;
@@ -190,11 +103,11 @@
         .layer-control {
             display: flex;
             align-items: center;
-            margin: 10px 0;
+            margin: 8px 0;
             color: #e2e8f0;
-            font-size: 0.85em;
-            padding: 5px;
-            border-radius: 8px;
+            font-size: 0.8em;
+            padding: 4px;
+            border-radius: 6px;
             transition: background-color 0.3s ease;
         }
 
@@ -203,14 +116,8 @@
         }
 
         .layer-control input[type="checkbox"] {
-            margin-right: 10px;
-            transform: scale(1.3);
-            accent-color: #3b82f6;
-        }
-
-        .layer-control input[type="range"] {
-            margin-left: 15px;
-            width: 70px;
+            margin-right: 8px;
+            transform: scale(1.2);
             accent-color: #3b82f6;
         }
 
@@ -220,137 +127,240 @@
             right: 15px;
             z-index: 1000;
             background: rgba(0,0,0,0.85);
-            padding: 10px 18px;
-            border-radius: 25px;
-            font-size: 13px;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 12px;
             backdrop-filter: blur(15px);
             border: 1px solid rgba(255,255,255,0.1);
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
 
-        .status-connected { color: #10b981; }
-        .status-disconnected { color: #ef4444; }
         .status-demo { color: #f59e0b; }
+        .status-disconnected { color: #ef4444; }
+
+        /* Header below map */
+        .header {
+            background: linear-gradient(135deg, #1565c0, #0d47a1);
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            color: #e3f2fd;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.7);
+            margin-bottom: 10px;
+        }
+
+        .vessel-badge {
+            background: rgba(255,255,255,0.15);
+            padding: 10px 20px;
+            border-radius: 25px;
+            display: inline-block;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255,255,255,0.2);
+            font-weight: 500;
+        }
+
+        .controls {
+            background: linear-gradient(135deg, #1e3a8a, #1565c0);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            flex-wrap: wrap;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .control-group label {
+            font-weight: bold;
+            color: #e3f2fd;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input[type="datetime-local"] {
+            padding: 10px 14px;
+            border: 2px solid #3b82f6;
+            border-radius: 8px;
+            background: rgba(30, 41, 59, 0.8);
+            color: #e3f2fd;
+            font-size: 14px;
+            min-width: 180px;
+            transition: all 0.3s ease;
+        }
+
+        input[type="datetime-local"]:focus {
+            border-color: #60a5fa;
+            box-shadow: 0 0 10px rgba(96, 165, 250, 0.4);
+            outline: none;
+        }
+
+        .duration-display {
+            padding: 10px 14px;
+            background: rgba(30, 41, 59, 0.8);
+            border: 2px solid #059669;
+            border-radius: 8px;
+            color: #10b981;
+            font-weight: bold;
+            min-width: 180px;
+            text-align: center;
+        }
+
+        button {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #059669, #047857);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(5, 150, 105, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 14px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(5, 150, 105, 0.6);
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        button:disabled {
+            background: #374151;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
 
         .info-panel {
             background: linear-gradient(135deg, #1e3a8a, #1565c0);
-            padding: 25px;
-            border-top: 3px solid #3b82f6;
+            padding: 20px;
             box-shadow: 0 -4px 15px rgba(0,0,0,0.2);
         }
 
         .track-info {
             background: rgba(59, 130, 246, 0.15);
-            padding: 20px;
-            border-radius: 15px;
-            margin: 20px 0;
+            padding: 15px;
+            border-radius: 12px;
+            margin: 15px 0;
             border: 1px solid rgba(59, 130, 246, 0.3);
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
 
         .vessel-info {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
         }
 
         .info-card {
             background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(51, 65, 85, 0.9));
-            padding: 20px;
-            border-radius: 15px;
+            padding: 15px;
+            border-radius: 12px;
             border-left: 4px solid #3b82f6;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: transform 0.3s ease;
         }
 
         .info-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            transform: translateY(-3px);
         }
 
         .info-card h4 {
-            margin: 0 0 15px 0;
+            margin: 0 0 10px 0;
             color: #60a5fa;
-            font-size: 1.1em;
+            font-size: 1em;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
 
         .info-card p {
             margin: 0;
-            font-size: 1.05em;
+            font-size: 1em;
             color: #e2e8f0;
-            line-height: 1.5;
+            line-height: 1.4;
         }
 
         .timestamp {
-            font-size: 0.85em;
+            font-size: 0.8em;
             color: #94a3b8;
-            margin-top: 8px;
+            margin-top: 6px;
             font-style: italic;
         }
 
         .elapsed-time {
             color: #10b981;
             font-weight: bold;
-            font-size: 1.2em;
-            text-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+            font-size: 1.1em;
         }
 
         .hourly-waypoint {
-            width: 12px;
-            height: 12px;
+            width: 10px;
+            height: 10px;
             background: linear-gradient(135deg, #3b82f6, #1d4ed8);
             border: 2px solid #fff;
             border-radius: 50%;
-            box-shadow: 0 0 15px rgba(59, 130, 246, 0.8);
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.6);
         }
 
         .latest-position {
-            width: 18px;
-            height: 18px;
+            width: 14px;
+            height: 14px;
             background: linear-gradient(135deg, #10b981, #059669);
-            border: 3px solid #fff;
+            border: 2px solid #fff;
             border-radius: 50%;
-            box-shadow: 0 0 20px rgba(16, 185, 129, 1);
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.8);
             animation: pulse 2s infinite;
         }
 
         @keyframes pulse {
             0% { 
                 transform: scale(1); 
-                box-shadow: 0 0 20px rgba(16, 185, 129, 1); 
+                box-shadow: 0 0 15px rgba(16, 185, 129, 0.8); 
             }
             50% { 
                 transform: scale(1.2); 
-                box-shadow: 0 0 30px rgba(16, 185, 129, 1); 
+                box-shadow: 0 0 20px rgba(16, 185, 129, 1); 
             }
             100% { 
                 transform: scale(1); 
-                box-shadow: 0 0 20px rgba(16, 185, 129, 1); 
+                box-shadow: 0 0 15px rgba(16, 185, 129, 0.8); 
             }
         }
 
         .leaflet-popup-content {
             color: #1e293b;
             font-weight: 500;
-            min-width: 220px;
+            min-width: 200px;
         }
 
         .leaflet-popup-content h3 {
-            margin: 0 0 10px 0;
+            margin: 0 0 8px 0;
             color: #1565c0;
-            font-size: 1.2em;
+            font-size: 1.1em;
         }
 
         .data-row {
             display: flex;
             justify-content: space-between;
-            margin: 8px 0;
-            padding: 5px 0;
+            margin: 6px 0;
+            padding: 3px 0;
             border-bottom: 1px solid #e2e8f0;
+            font-size: 0.9em;
         }
 
         .data-row:last-child {
@@ -359,10 +369,10 @@
 
         .footer {
             background: linear-gradient(135deg, #0a1929, #1e3a8a);
-            padding: 20px;
+            padding: 15px;
             text-align: center;
             border-top: 1px solid rgba(59, 130, 246, 0.3);
-            margin-top: 20px;
+            font-size: 0.9em;
         }
 
         .footer a {
@@ -376,47 +386,153 @@
             text-decoration: underline;
         }
 
+        /* Mobile responsiveness */
         @media (max-width: 768px) {
+            #map {
+                height: 60vh;
+            }
+            
             .header h1 {
-                font-size: 2.2em;
+                font-size: 2em;
             }
             
             .controls {
                 flex-direction: column;
                 align-items: center;
+                gap: 15px;
             }
             
             .map-controls {
                 position: relative;
-                margin: 15px;
-                width: calc(100% - 30px);
-            }
-            
-            #map {
-                height: 50vh;
+                margin: 10px;
+                width: calc(100% - 20px);
+                max-width: none;
             }
             
             .vessel-info {
                 grid-template-columns: 1fr;
             }
+            
+            input[type="datetime-local"], .duration-display {
+                min-width: 160px;
+            }
+        }
+
+        /* Map styling for nautical chart appearance */
+        .leaflet-container {
+            background: #a8d8f0 !important; /* Light blue water color */
+        }
+
+        .leaflet-tile-pane {
+            filter: sepia(10%) saturate(120%) hue-rotate(180deg) brightness(95%);
+        }
+
+        /* Navigation marker styling */
+        .nav-marker {
+            font-family: 'Segoe UI', Arial, sans-serif !important;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8) !important;
+        }
+
+        .hazard-marker {
+            font-family: 'Segoe UI', Arial, sans-serif !important;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8) !important;
+        }
+
+        /* Chart grid overlay */
+        .chart-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 50;
+            background-image: 
+                linear-gradient(rgba(0,0,0,0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,0,0,0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            opacity: 0.3;
+        }
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2000;
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            border-radius: 10px;
+            color: white;
+            font-size: 14px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
     </style>
 </head>
 <body>
+    <!-- Map at top -->
+    <div id="map">
+        <div class="chart-grid"></div>
+        
+        <div class="burger-menu" id="burgerMenu" onclick="toggleLayerControls()">
+            <div class="burger-line"></div>
+            <div class="burger-line"></div>
+            <div class="burger-line"></div>
+        </div>
+
+        <div class="map-controls" id="mapControls">
+            <h4>🗺️ Navigation</h4>
+            <div class="layer-control">
+                <input type="checkbox" id="navigationLayer" checked>
+                <label for="navigationLayer">Nav Markers</label>
+            </div>
+            <div class="layer-control">
+                <input type="checkbox" id="hazardLayer" checked>
+                <label for="hazardLayer">Hazards</label>
+            </div>
+        </div>
+        
+        <div id="connectionStatus" class="connection-status status-disconnected">
+            ⚫ Ready to Track
+        </div>
+
+        <div id="loadingIndicator" class="loading" style="display: none;">
+            <div class="spinner"></div>
+            Loading charts...
+        </div>
+    </div>
+
+    <!-- Header below map -->
     <div class="header">
         <h1>⚓ Pegasus Vessel Tracker</h1>
         <div class="vessel-badge">
             Dover Strait Maritime Navigation | MMSI: 232018618
         </div>
-        <div class="github-info">
-            🚀 <strong>Hosted on GitHub Pages</strong> | Real-time vessel tracking with OpenSeaMap charts
-        </div>
     </div>
 
+    <!-- Controls -->
     <div class="controls">
         <div class="control-group">
             <label>Start Time (BST)</label>
-            <input type="datetime-local" id="startTime" value="2025-06-26T03:39">
+            <input type="datetime-local" id="startTime" value="2025-06-27T03:39">
         </div>
         <div class="control-group">
             <label>Track Duration</label>
@@ -428,48 +544,21 @@
         </div>
     </div>
 
-    <div id="map">
-        <div class="map-controls">
-            <h4>🗺️ Nautical Chart Layers</h4>
-            <div class="layer-control">
-                <input type="checkbox" id="seamarksLayer" checked>
-                <label for="seamarksLayer">Sea Marks & Buoys</label>
-            </div>
-            <div class="layer-control">
-                <input type="checkbox" id="contoursLayer" checked>
-                <label for="contoursLayer">Marine Contours</label>
-                <input type="range" id="contoursOpacity" min="0" max="100" value="70">
-            </div>
-            <div class="layer-control">
-                <input type="checkbox" id="depthLayer" checked>
-                <label for="depthLayer">Depth Soundings</label>
-                <input type="range" id="depthOpacity" min="0" max="100" value="60">
-            </div>
-            <div class="layer-control">
-                <input type="checkbox" id="harborsLayer" checked>
-                <label for="harborsLayer">Harbors & Ports</label>
-            </div>
-        </div>
-        
-        <div id="connectionStatus" class="connection-status status-disconnected">
-            ⚫ Ready to Track
-        </div>
-    </div>
-
+    <!-- Info panel -->
     <div class="info-panel">
         <h3>📡 Pegasus Vessel - Live Maritime Navigation System</h3>
         <div class="track-info">
             <strong>Chart Coverage:</strong> Dover Strait (Margate ↔ Boulogne-sur-Mer/Calais)<br>
             <strong>Tracking Mode:</strong> Open Duration - Continuous Monitoring<br>
-            <strong>Chart Source:</strong> OpenSeaMap Nautical Charts + Simulated AIS Data<br>
-            <strong>Start Time:</strong> <span id="trackStartDisplay">26 June 2025, 03:39 BST</span><br>
+            <strong>Chart Source:</strong> OpenStreetMap Marine Features + Simulated AIS Data<br>
+            <strong>Start Time:</strong> <span id="trackStartDisplay">27 June 2025, 03:39 BST</span><br>
             <strong>Elapsed Time:</strong> <span class="elapsed-time" id="elapsedTime">--:--:--</span>
         </div>
         <div id="vesselInfo" class="vessel-info">
             <div class="info-card">
                 <h4>🔍 Status</h4>
                 <p>Ready to begin tracking</p>
-                <div class="timestamp">GitHub Pages Deployment Active</div>
+                <div class="timestamp">GitHub Pages Active</div>
             </div>
             <div class="info-card">
                 <h4>📍 Position</h4>
@@ -490,163 +579,14 @@
     </div>
 
     <div class="footer">
-        <p>Pegasus Vessel Tracker | Powered by <a href="https://openseamap.org" target="_blank">OpenSeaMap</a> & <a href="https://leafletjs.com" target="_blank">Leaflet</a></p>
+        <p>Pegasus Vessel Tracker | Powered by <a href="https://openstreetmap.org" target="_blank">OpenStreetMap</a> & <a href="https://leafletjs.com" target="_blank">Leaflet</a></p>
         <p>Maritime navigation data for educational and demonstration purposes</p>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Dover Strait coordinates - optimized for GitHub Pages
-        const doverStraitBounds = [
-            [50.8, 1.0],   // Southwest (near Boulogne-sur-Mer)
-            [51.5, 1.8]    // Northeast (near Margate)
-        ];
-
-        // Initialize map with better performance settings
-        const map = L.map('map', {
-            preferCanvas: true,
-            zoomControl: true,
-            attributionControl: true
-        }).fitBounds(doverStraitBounds);
-
-        // Optimized tile layers for GitHub Pages
-        const baseLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors',
-            maxZoom: 18,
-            tileSize: 256
-        });
-
-        const seamarksLayer = L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png', {
-            attribution: '© OpenSeaMap | Sea marks, buoys, lights',
-            transparent: true,
-            opacity: 1.0,
-            maxZoom: 18
-        });
-
-        const contoursLayer = L.tileLayer('https://tiles.openseamap.org/contours/{z}/{x}/{y}.png', {
-            attribution: '© OpenSeaMap | Marine contours',
-            transparent: true,
-            opacity: 0.7,
-            maxZoom: 18
-        });
-
-        const depthLayer = L.tileLayer('https://tiles.openseamap.org/depth/{z}/{x}/{y}.png', {
-            attribution: '© OpenSeaMap | Depth soundings',
-            transparent: true,
-            opacity: 0.6,
-            maxZoom: 18
-        });
-
-        const harborsLayer = L.tileLayer('https://tiles.openseamap.org/harbours/{z}/{x}/{y}.png', {
-            attribution: '© OpenSeaMap | Harbors and ports',
-            transparent: true,
-            opacity: 0.8,
-            maxZoom: 18
-        });
-
-        // Add base layer
-        baseLayer.addTo(map);
-
-        // Add all nautical layers initially
-        const nauticalLayers = {
-            'seamarks': seamarksLayer,
-            'contours': contoursLayer,
-            'depth': depthLayer,
-            'harbors': harborsLayer
-        };
-
-        // Add all layers to map initially
-        Object.values(nauticalLayers).forEach(layer => layer.addTo(map));
-
-        // Enhanced layer control event handlers
-        document.getElementById('seamarksLayer').addEventListener('change', function() {
-            if (this.checked) {
-                seamarksLayer.addTo(map);
-            } else {
-                map.removeLayer(seamarksLayer);
-            }
-        });
-
-        document.getElementById('contoursLayer').addEventListener('change', function() {
-            if (this.checked) {
-                contoursLayer.addTo(map);
-            } else {
-                map.removeLayer(contoursLayer);
-            }
-        });
-
-        document.getElementById('contoursOpacity').addEventListener('input', function() {
-            contoursLayer.setOpacity(this.value / 100);
-        });
-
-        document.getElementById('depthLayer').addEventListener('change', function() {
-            if (this.checked) {
-                depthLayer.addTo(map);
-            } else {
-                map.removeLayer(depthLayer);
-            }
-        });
-
-        document.getElementById('depthOpacity').addEventListener('input', function() {
-            depthLayer.setOpacity(this.value / 100);
-        });
-
-        document.getElementById('harborsLayer').addEventListener('change', function() {
-            if (this.checked) {
-                harborsLayer.addTo(map);
-            } else {
-                map.removeLayer(harborsLayer);
-            }
-        });
-
-        // Enhanced landmark markers
-        const landmarks = [
-            { name: "Dover", pos: [51.1279, 1.3134], type: "major_port", description: "Major ferry port to Continental Europe" },
-            { name: "Calais", pos: [50.9513, 1.8587], type: "major_port", description: "Primary French channel port" },
-            { name: "Boulogne-sur-Mer", pos: [50.7264, 1.6147], type: "port", description: "Historic fishing and ferry port" },
-            { name: "Margate", pos: [51.3813, 1.3862], type: "port", description: "Seaside town and harbour" },
-            { name: "Goodwin Sands", pos: [51.2167, 1.5833], type: "hazard", description: "Dangerous sandbank - Ship graveyard" },
-            { name: "Dover TSS", pos: [51.0500, 1.4500], type: "traffic_sep", description: "Traffic Separation Scheme" },
-            { name: "Sandettié Bank", pos: [51.1333, 1.7333], type: "hazard", description: "Shallow water hazard" }
-        ];
-
-        landmarks.forEach(landmark => {
-            let icon, color;
-            
-            switch(landmark.type) {
-                case 'major_port':
-                    icon = '🏢'; color = '#10b981'; break;
-                case 'port':
-                    icon = '⚓'; color = '#3b82f6'; break;
-                case 'hazard':
-                    icon = '⚠️'; color = '#ef4444'; break;
-                case 'traffic_sep':
-                    icon = '🚦'; color = '#f59e0b'; break;
-                default:
-                    icon = '📍'; color = '#6b7280';
-            }
-            
-            const marker = L.marker(landmark.pos, {
-                icon: L.divIcon({
-                    html: `<div style="background: ${color}; color: white; padding: 5px 10px; border-radius: 15px; font-size: 11px; font-weight: bold; white-space: nowrap; box-shadow: 0 2px 10px rgba(0,0,0,0.3);">${icon} ${landmark.name}</div>`,
-                    className: 'landmark-label',
-                    iconSize: [140, 28],
-                    iconAnchor: [70, 14]
-                })
-            }).addTo(map);
-
-            marker.bindPopup(`
-                <div style="text-align: center;">
-                    <h3 style="color: ${color}; margin: 0 0 5px 0;">${icon} ${landmark.name}</h3>
-                    <p style="margin: 0; font-size: 0.9em;">${landmark.description}</p>
-                    <p style="margin: 5px 0 0 0; font-size: 0.8em; color: #666;">
-                        ${landmark.pos[0].toFixed(4)}°N, ${landmark.pos[1].toFixed(4)}°E
-                    </p>
-                </div>
-            `);
-        });
-
-        // Vessel tracking variables
+        // Global variables
+        let map;
         let isTracking = false;
         let vesselPositions = [];
         let trackPolyline = null;
@@ -654,13 +594,246 @@
         let lastHourlyPosition = null;
         let trackStartTime = null;
         let elapsedTimeInterval = null;
+        let currentPositionMarker = null;
+
+        // Dover Strait bounds
+        const doverStraitBounds = [
+            [50.8, 1.0],   // Southwest
+            [51.5, 1.8]    // Northeast
+        ];
+
+        // Initialize map
+        function initializeMap() {
+            try {
+                // Show loading
+                document.getElementById('loadingIndicator').style.display = 'block';
+
+                // Create map
+                map = L.map('map', {
+                    preferCanvas: true,
+                    zoomControl: true
+                }).fitBounds(doverStraitBounds);
+
+                // Base OpenStreetMap layer - reliable and always works
+                const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors',
+                    maxZoom: 18
+                });
+
+                // Add base layer
+                osmLayer.addTo(map);
+
+                // Add chart grid overlay for nautical chart appearance
+                const chartGrid = document.querySelector('.chart-grid');
+                if (chartGrid) {
+                    chartGrid.style.display = 'block';
+                }
+
+                // Store layer references
+                window.layers = {
+                    osm: osmLayer
+                };
+
+                // Layer controls
+                setupLayerControls();
+
+                // Add manual navigation markers
+                addNavigationMarkers();
+
+                // Hide loading
+                setTimeout(() => {
+                    document.getElementById('loadingIndicator').style.display = 'none';
+                }, 500);
+
+                console.log('Map initialized successfully with OSM');
+
+            } catch (error) {
+                console.error('Map initialization error:', error);
+                document.getElementById('loadingIndicator').innerHTML = '<div style="color: #ef4444;">Map failed to load. Retrying...</div>';
+                
+                // Retry after 2 seconds
+                setTimeout(initializeMap, 2000);
+            }
+        }
+
+        function toggleLayerControls() {
+            const controls = document.getElementById('mapControls');
+            const burger = document.getElementById('burgerMenu');
+            
+            controls.classList.toggle('open');
+            burger.classList.toggle('open');
+        }
+
+        function setupLayerControls() {
+            // Navigation markers control
+            document.getElementById('navigationLayer').addEventListener('change', function() {
+                toggleNavigationMarkers(this.checked);
+            });
+
+            // Hazards control
+            document.getElementById('hazardLayer').addEventListener('change', function() {
+                toggleHazardMarkers(this.checked);
+            });
+        }
+
+        let navigationMarkers = [];
+        let hazardMarkers = [];
+
+        function addNavigationMarkers() {
+            // Enhanced navigation aids and ports with more detail
+            const navigationAids = [
+                { name: "Dover Port", pos: [51.1279, 1.3134], type: "major_port", description: "Major ferry terminal to Calais" },
+                { name: "Calais Port", pos: [50.9513, 1.8587], type: "major_port", description: "French ferry terminal from Dover" },
+                { name: "Dover East Breakwater Lt", pos: [51.1158, 1.3425], type: "light", description: "Fl.R.5s - Major navigation light" },
+                { name: "Calais West Pier Lt", pos: [50.9558, 1.8520], type: "light", description: "Fl.G.4s - Port approach light" },
+                { name: "South Goodwin LV", pos: [51.1667, 1.5333], type: "lightvessel", description: "Q.R - Light vessel marking Goodwin Sands" },
+                { name: "Dover TSS Entry", pos: [51.0500, 1.4500], type: "waypoint", description: "Traffic separation scheme entry point" },
+                { name: "East Goodwin Buoy", pos: [51.2000, 1.6000], type: "buoy", description: "Q(3)10s - East cardinal buoy" },
+                { name: "Dover Patrol Anch", pos: [51.0833, 1.3833], type: "anchor", description: "Anchorage area - Depth 12-20m" },
+                { name: "Calais Approach", pos: [50.9700, 1.8200], type: "waypoint", description: "Recommended approach route" },
+                { name: "Varne Bank", pos: [50.9500, 1.4500], type: "bank", description: "Shoal area - Min depth 8m" }
+            ];
+
+            navigationAids.forEach(aid => {
+                let icon, color, size;
+                
+                switch(aid.type) {
+                    case 'major_port':
+                        icon = '🏢'; color = '#10b981'; size = '12px'; break;
+                    case 'light':
+                        icon = '💡'; color = '#fbbf24'; size = '11px'; break;
+                    case 'lightvessel':
+                        icon = '🚢'; color = '#f59e0b'; size = '11px'; break;
+                    case 'buoy':
+                        icon = '🔴'; color = '#ef4444'; size = '10px'; break;
+                    case 'waypoint':
+                        icon = '📍'; color = '#3b82f6'; size = '10px'; break;
+                    case 'anchor':
+                        icon = '⚓'; color = '#8b5cf6'; size = '10px'; break;
+                    case 'bank':
+                        icon = '🟤'; color = '#a16207'; size = '10px'; break;
+                    default:
+                        icon = '⚓'; color = '#6b7280'; size = '10px';
+                }
+                
+                const marker = L.marker(aid.pos, {
+                    icon: L.divIcon({
+                        html: `<div style="background: ${color}; color: white; padding: 2px 5px; border-radius: 6px; font-size: ${size}; font-weight: bold; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.4); border: 1px solid white; text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">${icon} ${aid.name}</div>`,
+                        className: 'nav-marker',
+                        iconSize: [120, 20],
+                        iconAnchor: [60, 10]
+                    })
+                }).addTo(map);
+
+                marker.bindPopup(`
+                    <div style="text-align: center; min-width: 160px;">
+                        <h3 style="color: ${color}; margin: 0 0 8px 0; font-size: 1em;">${icon} ${aid.name}</h3>
+                        <p style="margin: 0; font-size: 0.85em; color: #333; font-weight: 500;">${aid.description}</p>
+                        <p style="margin: 8px 0 0 0; font-size: 0.75em; color: #666; font-family: monospace;">
+                            ${aid.pos[0].toFixed(4)}°N ${aid.pos[1].toFixed(4)}°E
+                        </p>
+                    </div>
+                `);
+
+                navigationMarkers.push(marker);
+            });
+
+            // Add depth markings
+            addDepthMarkings();
+
+            // Add hazard markers
+            addHazardMarkers();
+        }
+
+        function addDepthMarkings() {
+            // Add depth soundings for nautical chart realism
+            const depthSoundings = [
+                { pos: [51.1000, 1.4000], depth: "15" },
+                { pos: [51.0800, 1.4500], depth: "22" },
+                { pos: [51.0600, 1.5000], depth: "18" },
+                { pos: [51.1200, 1.5000], depth: "12" },
+                { pos: [51.1500, 1.5500], depth: "8" },
+                { pos: [50.9800, 1.7000], depth: "25" },
+                { pos: [50.9600, 1.7500], depth: "20" }
+            ];
+
+            depthSoundings.forEach(sounding => {
+                const marker = L.marker(sounding.pos, {
+                    icon: L.divIcon({
+                        html: `<div style="color: #1e40af; font-size: 10px; font-weight: bold; text-shadow: 1px 1px 2px rgba(255,255,255,0.8); font-family: monospace;">${sounding.depth}</div>`,
+                        className: 'depth-marking',
+                        iconSize: [20, 15],
+                        iconAnchor: [10, 8]
+                    })
+                }).addTo(map);
+
+                marker.bindPopup(`
+                    <div style="text-align: center;">
+                        <h4 style="margin: 0; color: #1e40af;">Depth Sounding</h4>
+                        <p style="margin: 5px 0 0 0; font-size: 1.2em; font-weight: bold;">${sounding.depth} meters</p>
+                    </div>
+                `);
+
+                navigationMarkers.push(marker);
+            });
+        }
+
+        function addHazardMarkers() {
+            const hazards = [
+                { name: "Goodwin Sands", pos: [51.2167, 1.5833], description: "Dangerous sandbank - Ship graveyard" },
+                { name: "Sandettié Bank", pos: [51.1333, 1.7333], description: "Shallow water hazard" },
+                { name: "Ridge Bank", pos: [51.0833, 1.4167], description: "Shallow area - caution" }
+            ];
+
+            hazards.forEach(hazard => {
+                const marker = L.marker(hazard.pos, {
+                    icon: L.divIcon({
+                        html: `<div style="background: #ef4444; color: white; padding: 3px 6px; border-radius: 8px; font-size: 10px; font-weight: bold; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.3); border: 1px solid white; animation: blink 2s infinite;">⚠️ ${hazard.name}</div>`,
+                        className: 'hazard-marker',
+                        iconSize: [140, 24],
+                        iconAnchor: [70, 12]
+                    })
+                }).addTo(map);
+
+                marker.bindPopup(`
+                    <div style="text-align: center; min-width: 150px;">
+                        <h3 style="color: #ef4444; margin: 0 0 5px 0; font-size: 1em;">⚠️ ${hazard.name}</h3>
+                        <p style="margin: 0; font-size: 0.85em; color: #333;">${hazard.description}</p>
+                        <p style="margin: 5px 0 0 0; font-size: 0.75em; color: #666;">
+                            ${hazard.pos[0].toFixed(4)}°N, ${hazard.pos[1].toFixed(4)}°E
+                        </p>
+                    </div>
+                `);
+
+                hazardMarkers.push(marker);
+            });
+        }
+
+        function toggleNavigationMarkers(show) {
+            navigationMarkers.forEach(marker => {
+                if (show) {
+                    marker.addTo(map);
+                } else {
+                    map.removeLayer(marker);
+                }
+            });
+        }
+
+        function toggleHazardMarkers(show) {
+            hazardMarkers.forEach(marker => {
+                if (show) {
+                    marker.addTo(map);
+                } else {
+                    map.removeLayer(marker);
+                }
+            });
+        }
 
         function updateConnectionStatus(status) {
             const statusEl = document.getElementById('connectionStatus');
             statusEl.className = `connection-status status-${status}`;
             
             const statusText = {
-                'connected': '🟢 Live Tracking Active',
                 'demo': '🟡 Demo Mode Active',
                 'disconnected': '🔴 Tracking Stopped'
             };
@@ -714,12 +887,12 @@
                 isTracking = true;
                 button.textContent = 'Stop Tracking';
                 button.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
-                button.style.boxShadow = '0 6px 20px rgba(239, 68, 68, 0.4)';
+                button.style.boxShadow = '0 4px 15px rgba(239, 68, 68, 0.4)';
                 
                 startElapsedTimeCounter();
-                
-                // Start demo mode immediately for GitHub Pages
                 updateConnectionStatus('demo');
+                
+                // Start simulation immediately
                 simulateVesselData();
                 
             } catch (error) {
@@ -736,10 +909,35 @@
             const button = document.getElementById('trackButton');
             button.textContent = 'Start Live Tracking';
             button.style.background = 'linear-gradient(135deg, #059669, #047857)';
-            button.style.boxShadow = '0 6px 20px rgba(5, 150, 105, 0.4)';
+            button.style.boxShadow = '0 4px 15px rgba(5, 150, 105, 0.4)';
             
             stopElapsedTimeCounter();
             updateConnectionStatus('disconnected');
+        }
+
+        function simulateVesselData() {
+            updateVesselInfo({
+                status: '🟡 Demo Mode - Simulated Data',
+                position: 'Generating vessel movement...',
+                lastUpdate: new Date().toLocaleString()
+            });
+
+            // Simulated Dover Strait crossing
+            const samplePositions = [
+                { lat: 51.1279, lng: 1.3134, speed: 12.5, course: 95, timestamp: new Date(), heading: 95, destination: "Calais" },
+                { lat: 51.1150, lng: 1.4200, speed: 13.2, course: 98, timestamp: new Date(Date.now() + 1800000), heading: 98, destination: "Calais" },
+                { lat: 51.1000, lng: 1.5500, speed: 11.8, course: 102, timestamp: new Date(Date.now() + 3600000), heading: 102, destination: "Calais" },
+                { lat: 50.9800, lng: 1.6800, speed: 10.5, course: 105, timestamp: new Date(Date.now() + 5400000), heading: 105, destination: "Calais" },
+                { lat: 50.9513, lng: 1.8587, speed: 8.0, course: 0, timestamp: new Date(Date.now() + 7200000), heading: 0, destination: "Calais Port" }
+            ];
+
+            samplePositions.forEach((pos, index) => {
+                setTimeout(() => {
+                    if (isTracking) {
+                        addVesselPosition(pos);
+                    }
+                }, index * 3000); // 3 second intervals
+            });
         }
 
         function addVesselPosition(position) {
@@ -754,12 +952,12 @@
             
             trackPolyline = L.polyline(trackPoints, {
                 color: '#3b82f6',
-                weight: 4,
+                weight: 3,
                 opacity: 0.8,
                 smoothFactor: 1
             }).addTo(map);
 
-            // Add hourly waypoint if enough time has passed
+            // Add hourly waypoint if needed
             if (shouldAddHourlyWaypoint(position)) {
                 addHourlyWaypoint(position);
                 lastHourlyPosition = position;
@@ -775,4 +973,15 @@
                 speed: `${position.speed.toFixed(1)} knots`,
                 course: `${position.course.toFixed(0)}° ${getDirectionFromBearing(position.course)}`,
                 destination: position.destination,
-                last
+                lastUpdate: position.timestamp.toLocaleString(),
+                totalWaypoints: hourlyMarkers.length
+            });
+
+            // Pan map to follow vessel
+            map.panTo([position.lat, position.lng]);
+        }
+
+        function shouldAddHourlyWaypoint(position) {
+            if (!lastHourlyPosition) return true;
+            
+            const hoursSinceLastWaypoint = (position.timestamp - lastHourlyPosition.timestamp)
