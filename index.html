@@ -3,787 +3,353 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pegasus Vessel Tracker - Dover Strait</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚓</text></svg>">
+    <title>Pegasus Vessel Tracker</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-
+        
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #0a1929, #1e3a8a);
-            color: #fff;
-            overflow-x: hidden;
+            font-family: Arial, sans-serif;
+            background: #f0f0f0;
+            color: #333;
         }
-
-        /* Map container at top - 70% height */
-        #map {
-            height: 70vh;
-            width: 100%;
-            position: relative;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-            z-index: 1;
-        }
-
-        /* Nautical chart styling */
-        .leaflet-container {
-            background: #a8d8f0 !important;
-        }
-
-        .leaflet-tile-pane {
-            filter: sepia(10%) saturate(120%) hue-rotate(180deg) brightness(95%);
-        }
-
-        /* Chart grid overlay */
-        .chart-grid {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 50;
-            background-image: 
-                linear-gradient(rgba(0,0,0,0.1) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0,0,0,0.1) 1px, transparent 1px);
-            background-size: 50px 50px;
-            opacity: 0.3;
-        }
-
-        /* Burger menu for layer controls */
-        .burger-menu {
-            position: absolute;
-            bottom: 15px;
-            left: 15px;
-            z-index: 1001;
-            background: rgba(0,0,0,0.85);
-            width: 40px;
-            height: 40px;
-            border-radius: 8px;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            transition: all 0.3s ease;
-            border: 1px solid rgba(59, 130, 246, 0.3);
-        }
-
-        .burger-menu:hover {
-            background: rgba(59, 130, 246, 0.2);
-        }
-
-        .burger-line {
-            width: 20px;
-            height: 2px;
-            background: #60a5fa;
-            margin: 2px 0;
-            transition: all 0.3s ease;
-        }
-
-        .burger-menu.open .burger-line:nth-child(1) {
-            transform: rotate(45deg) translate(5px, 5px);
-        }
-
-        .burger-menu.open .burger-line:nth-child(2) {
-            opacity: 0;
-        }
-
-        .burger-menu.open .burger-line:nth-child(3) {
-            transform: rotate(-45deg) translate(7px, -6px);
-        }
-
-        /* Hidden layer controls */
-        .map-controls {
-            position: absolute;
-            bottom: 15px;
-            left: 15px;
-            z-index: 1000;
-            background: rgba(0,0,0,0.85);
-            padding: 15px;
-            border-radius: 12px;
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(59, 130, 246, 0.3);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
-            max-width: 200px;
-            transform: translateX(-100%);
-            transition: transform 0.3s ease;
-        }
-
-        .map-controls.open {
-            transform: translateX(0);
-        }
-
-        .map-controls h4 {
-            margin: 0 0 10px 0;
-            color: #60a5fa;
-            font-size: 0.85em;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            text-align: center;
-        }
-
-        .layer-control {
-            display: flex;
-            align-items: center;
-            margin: 8px 0;
-            color: #e2e8f0;
-            font-size: 0.8em;
-            padding: 4px;
-            border-radius: 6px;
-            transition: background-color 0.3s ease;
-        }
-
-        .layer-control:hover {
-            background: rgba(59, 130, 246, 0.1);
-        }
-
-        .layer-control input[type="checkbox"] {
-            margin-right: 8px;
-            transform: scale(1.2);
-            accent-color: #3b82f6;
-        }
-
-        /* Connection status */
-        .connection-status {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            z-index: 1000;
-            background: rgba(0,0,0,0.85);
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 12px;
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(255,255,255,0.1);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        }
-
-        .status-demo { color: #f59e0b; }
-        .status-disconnected { color: #ef4444; }
-
-        /* Header below map */
+        
         .header {
             background: linear-gradient(135deg, #1565c0, #0d47a1);
+            color: white;
             padding: 20px;
             text-align: center;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
         }
-
+        
         .header h1 {
             font-size: 2.5em;
-            color: #e3f2fd;
-            text-shadow: 2px 2px 8px rgba(0,0,0,0.7);
             margin-bottom: 10px;
         }
-
-        .vessel-badge {
-            background: rgba(255,255,255,0.15);
-            padding: 10px 20px;
-            border-radius: 25px;
-            display: inline-block;
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(255,255,255,0.2);
-            font-weight: 500;
-        }
-
-        /* Controls below header */
+        
         .controls {
-            background: linear-gradient(135deg, #1e3a8a, #1565c0);
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            gap: 25px;
-            flex-wrap: wrap;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
-
-        .control-group {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .control-group label {
-            font-weight: bold;
-            color: #e3f2fd;
-            font-size: 0.9em;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        input[type="datetime-local"] {
-            padding: 10px 14px;
-            border: 2px solid #3b82f6;
-            border-radius: 8px;
-            background: rgba(30, 41, 59, 0.8);
-            color: #e3f2fd;
-            font-size: 14px;
-            min-width: 180px;
-            transition: all 0.3s ease;
-        }
-
-        input[type="datetime-local"]:focus {
-            border-color: #60a5fa;
-            box-shadow: 0 0 10px rgba(96, 165, 250, 0.4);
-            outline: none;
-        }
-
-        button {
-            padding: 12px 24px;
-            background: linear-gradient(135deg, #059669, #047857);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(5, 150, 105, 0.4);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-size: 14px;
-            min-width: 180px;
-        }
-
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(5, 150, 105, 0.6);
-            background: linear-gradient(135deg, #10b981, #059669);
-        }
-
-        button.stop {
-            background: linear-gradient(135deg, #ef4444, #dc2626);
-            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
-        }
-
-        button.stop:hover {
-            background: linear-gradient(135deg, #f87171, #ef4444);
-            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.6);
-        }
-
-        /* Info panel */
-        .info-panel {
-            background: linear-gradient(135deg, #1e3a8a, #1565c0);
-            padding: 20px;
-            box-shadow: 0 -4px 15px rgba(0,0,0,0.2);
-        }
-
-        .track-info {
-            background: rgba(59, 130, 246, 0.15);
-            padding: 15px;
-            border-radius: 12px;
-            margin: 15px 0;
-            border: 1px solid rgba(59, 130, 246, 0.3);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-
-        .vessel-info {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
-        }
-
-        .info-card {
-            background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(51, 65, 85, 0.9));
-            padding: 15px;
-            border-radius: 12px;
-            border-left: 4px solid #3b82f6;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            transition: transform 0.3s ease;
-        }
-
-        .info-card:hover {
-            transform: translateY(-3px);
-        }
-
-        .info-card h4 {
-            margin: 0 0 10px 0;
-            color: #60a5fa;
-            font-size: 1em;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .info-card p {
-            margin: 0;
-            font-size: 1em;
-            color: #e2e8f0;
-            line-height: 1.4;
-        }
-
-        .timestamp {
-            font-size: 0.8em;
-            color: #94a3b8;
-            margin-top: 6px;
-            font-style: italic;
-        }
-
-        .elapsed-time {
-            color: #10b981;
-            font-weight: bold;
-            font-size: 1.1em;
-        }
-
-        /* Vessel markers */
-        .hourly-waypoint {
-            width: 10px;
-            height: 10px;
-            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-            border: 2px solid #fff;
-            border-radius: 50%;
-            box-shadow: 0 0 10px rgba(59, 130, 246, 0.6);
-        }
-
-        .latest-position {
-            width: 14px;
-            height: 14px;
-            background: linear-gradient(135deg, #10b981, #059669);
-            border: 2px solid #fff;
-            border-radius: 50%;
-            box-shadow: 0 0 15px rgba(16, 185, 129, 0.8);
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0% { 
-                transform: scale(1); 
-                box-shadow: 0 0 15px rgba(16, 185, 129, 0.8); 
-            }
-            50% { 
-                transform: scale(1.2); 
-                box-shadow: 0 0 20px rgba(16, 185, 129, 1); 
-            }
-            100% { 
-                transform: scale(1); 
-                box-shadow: 0 0 15px rgba(16, 185, 129, 0.8); 
-            }
-        }
-
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        /* Popup styling */
-        .leaflet-popup-content {
-            color: #1e293b;
-            font-weight: 500;
-            min-width: 200px;
-        }
-
-        .leaflet-popup-content h3 {
-            margin: 0 0 8px 0;
-            color: #1565c0;
-            font-size: 1.1em;
-        }
-
-        .data-row {
-            display: flex;
-            justify-content: space-between;
-            margin: 6px 0;
-            padding: 3px 0;
-            border-bottom: 1px solid #e2e8f0;
-            font-size: 0.9em;
-        }
-
-        .data-row:last-child {
-            border-bottom: none;
-        }
-
-        /* Footer */
-        .footer {
-            background: linear-gradient(135deg, #0a1929, #1e3a8a);
+            background: #2196f3;
             padding: 15px;
             text-align: center;
-            border-top: 1px solid rgba(59, 130, 246, 0.3);
-            font-size: 0.9em;
+            color: white;
         }
-
-        .footer a {
-            color: #60a5fa;
-            text-decoration: none;
+        
+        .controls input, .controls button {
+            margin: 5px;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+        }
+        
+        .controls button {
+            background: #4caf50;
+            color: white;
+            cursor: pointer;
             font-weight: bold;
         }
-
-        .footer a:hover {
-            color: #93c5fd;
-            text-decoration: underline;
+        
+        .controls button:hover {
+            background: #45a049;
         }
-
-        /* Mobile responsiveness */
-        @media (max-width: 768px) {
-            #map {
-                height: 60vh;
-            }
-            
-            .header h1 {
-                font-size: 2em;
-            }
-            
-            .controls {
-                flex-direction: column;
-                align-items: center;
-                gap: 15px;
-            }
-            
-            .vessel-info {
-                grid-template-columns: 1fr;
-            }
-            
-            input[type="datetime-local"], button {
-                min-width: 160px;
-            }
+        
+        #map {
+            height: 400px;
+            width: 100%;
+            margin: 20px 0;
+        }
+        
+        .info {
+            background: white;
+            padding: 20px;
+            margin: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .status {
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            text-align: center;
         }
     </style>
 </head>
 <body>
-    <!-- Map at top -->
-    <div id="map">
-        <div class="chart-grid"></div>
-        
-        <div class="burger-menu" id="burgerMenu">
-            <div class="burger-line"></div>
-            <div class="burger-line"></div>
-            <div class="burger-line"></div>
-        </div>
-
-        <div class="map-controls" id="mapControls">
-            <h4>🗺️ Navigation</h4>
-            <div class="layer-control">
-                <input type="checkbox" id="navigationLayer" checked>
-                <label for="navigationLayer">Nav Markers</label>
-            </div>
-            <div class="layer-control">
-                <input type="checkbox" id="hazardLayer" checked>
-                <label for="hazardLayer">Hazards</label>
-            </div>
-        </div>
-        
-        <div id="connectionStatus" class="connection-status status-disconnected">
-            ⚫ Ready to Track
-        </div>
-    </div>
-
-    <!-- Header below map -->
     <div class="header">
         <h1>⚓ Pegasus Vessel Tracker</h1>
-        <div class="vessel-badge">
-            Dover Strait Maritime Navigation | MMSI: 232018618
-        </div>
+        <p>Dover Strait Maritime Navigation | MMSI: 232018618</p>
     </div>
 
-    <!-- Controls -->
     <div class="controls">
-        <div class="control-group">
-            <label>Start Time (BST)</label>
-            <input type="datetime-local" id="startTime" value="2025-06-27T03:39">
-        </div>
-        <div class="control-group">
-            <label>Control</label>
-            <button id="trackButton">Start Live Tracking</button>
+        <label>Start Time: </label>
+        <input type="datetime-local" id="startTime" value="2025-06-26T03:39">
+        <button onclick="startTracking()" id="trackBtn">Start Tracking</button>
+    </div>
+
+    <div id="map"></div>
+
+    <div class="info">
+        <h3>📡 Vessel Information</h3>
+        <div class="status" id="status">Ready to start tracking</div>
+        <div id="vesselData">
+            <p><strong>Position:</strong> <span id="position">--</span></p>
+            <p><strong>Speed:</strong> <span id="speed">--</span></p>
+            <p><strong>Course:</strong> <span id="course">--</span></p>
+            <p><strong>Time:</strong> <span id="time">--</span></p>
         </div>
     </div>
 
-    <!-- Info panel -->
-    <div class="info-panel">
-        <h3>📡 Pegasus Vessel - Live Maritime Navigation System</h3>
-        <div class="track-info">
-            <strong>Chart Coverage:</strong> Dover Strait (Margate ↔ Boulogne-sur-Mer/Calais)<br>
-            <strong>Tracking Mode:</strong> Open Duration - Continuous Monitoring<br>
-            <strong>Chart Source:</strong> OpenStreetMap + Manual Navigation Markers<br>
-            <strong>Start Time:</strong> <span id="trackStartDisplay">27 June 2025, 03:39 BST</span><br>
-            <strong>Elapsed Time:</strong> <span class="elapsed-time" id="elapsedTime">--:--:--</span>
-        </div>
-        <div id="vesselInfo" class="vessel-info">
-            <div class="info-card">
-                <h4>🔍 Status</h4>
-                <p>Ready to begin tracking</p>
-                <div class="timestamp">GitHub Pages Active</div>
-            </div>
-            <div class="info-card">
-                <h4>📍 Position</h4>
-                <p>Click "Start Live Tracking" to begin</p>
-                <div class="timestamp">Last update: --</div>
-            </div>
-            <div class="info-card">
-                <h4>🧭 Navigation</h4>
-                <p>Speed: -- knots<br>Course: --°</p>
-                <div class="timestamp">Awaiting vessel data</div>
-            </div>
-            <div class="info-card">
-                <h4>🚢 Voyage Data</h4>
-                <p>Destination: --<br>Waypoints: 0</p>
-                <div class="timestamp">Track Mode: Open Duration</div>
-            </div>
-        </div>
-    </div>
-
-    <div class="footer">
-        <p>Pegasus Vessel Tracker | Powered by <a href="https://openstreetmap.org" target="_blank">OpenStreetMap</a> & <a href="https://leafletjs.com" target="_blank">Leaflet</a></p>
-        <p>Maritime navigation data for educational and demonstration purposes</p>
-    </div>
-
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Global variables
+        console.log('Loading Leaflet library...');
+        
+        // Multiple CDN sources for Leaflet
+        const leafletSources = [
+            'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js',
+            'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
+            'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js'
+        ];
+        
+        let currentSource = 0;
+        let retryCount = 0;
+        const maxRetries = 10;
+        
+        function loadLeaflet() {
+            if (currentSource >= leafletSources.length) {
+                console.error('All Leaflet sources failed');
+                document.getElementById('status').innerHTML = '❌ Error: Could not load map library. Please check your internet connection.';
+                return;
+            }
+            
+            const script = document.createElement('script');
+            script.src = leafletSources[currentSource];
+            script.onload = function() {
+                console.log('Leaflet loaded from:', leafletSources[currentSource]);
+                initializeMap();
+            };
+            script.onerror = function() {
+                console.log('Failed to load from:', leafletSources[currentSource]);
+                currentSource++;
+                loadLeaflet();
+            };
+            document.head.appendChild(script);
+        }
+        
+        // Wait for Leaflet to load
+        function initializeMap() {
+            if (typeof L === 'undefined') {
+                retryCount++;
+                if (retryCount > maxRetries) {
+                    console.error('Max retries exceeded');
+                    document.getElementById('status').innerHTML = '❌ Error: Map library failed to load';
+                    return;
+                }
+                console.log(`Leaflet not loaded yet, retrying... (${retryCount}/${maxRetries})`);
+                setTimeout(initializeMap, 500);
+                return;
+            }
+            
+            console.log('Leaflet loaded successfully');
+            setupMap();
+        }
+        
+        // Initialize map
         let map;
         let isTracking = false;
-        let vesselPositions = [];
-        let trackPolyline = null;
-        let hourlyMarkers = [];
-        let lastHourlyPosition = null;
-        let trackStartTime = null;
-        let elapsedTimeInterval = null;
-        let currentPositionMarker = null;
-        let navigationMarkers = [];
-        let hazardMarkers = [];
-
-        // Dover Strait bounds
-        const doverStraitBounds = [
-            [50.8, 1.0],
-            [51.5, 1.8]
-        ];
-
-        // Initialize map
-        function initializeMap() {
+        let vesselMarker = null;
+        let trackLine = null;
+        let trackPoints = [];
+        
+        function setupMap() {
             try {
-                map = L.map('map', {
-                    preferCanvas: true,
-                    zoomControl: true
-                }).fitBounds(doverStraitBounds);
-
-                // OpenStreetMap base layer
-                const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                // Dover Strait bounds
+                const doverBounds = [[50.8, 1.0], [51.5, 1.8]];
+                
+                map = L.map('map').fitBounds(doverBounds);
+                console.log('Map initialized');
+                
+                // Add base layer
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     attribution: '© OpenStreetMap contributors',
                     maxZoom: 18
+                }).addTo(map);
+                
+                // Add ports
+                const ports = [
+                    {name: "Dover", pos: [51.1279, 1.3134]},
+                    {name: "Calais", pos: [50.9513, 1.8587]},
+                    {name: "Boulogne", pos: [50.7264, 1.6147]}
+                ];
+                
+                ports.forEach(port => {
+                    L.marker(port.pos).addTo(map)
+                        .bindPopup(`<b>${port.name}</b><br>Port`);
                 });
-
-                osmLayer.addTo(map);
-
-                setupLayerControls();
-                addNavigationMarkers();
-
-                console.log('Map initialized successfully');
+                
+                console.log('Map setup complete');
+                document.getElementById('status').innerHTML = '✅ Map loaded - Ready to track Pegasus vessel';
+                
             } catch (error) {
                 console.error('Map initialization error:', error);
+                document.getElementById('status').innerHTML = 'Error: Could not initialize map - ' + error.message;
             }
         }
-
-        // Toggle layer controls
-        function toggleLayerControls() {
-            const controls = document.getElementById('mapControls');
-            const burger = document.getElementById('burgerMenu');
-            
-            controls.classList.toggle('open');
-            burger.classList.toggle('open');
-        }
-
-        // Setup layer controls
-        function setupLayerControls() {
-            document.getElementById('burgerMenu').addEventListener('click', toggleLayerControls);
-
-            document.getElementById('navigationLayer').addEventListener('change', function() {
-                toggleNavigationMarkers(this.checked);
-            });
-
-            document.getElementById('hazardLayer').addEventListener('change', function() {
-                toggleHazardMarkers(this.checked);
-            });
-        }
-
-        // Add navigation markers
-        function addNavigationMarkers() {
-            // Navigation aids
-            const navigationAids = [
-                { name: "Dover Port", pos: [51.1279, 1.3134], type: "major_port", description: "Major ferry terminal to Calais" },
-                { name: "Calais Port", pos: [50.9513, 1.8587], type: "major_port", description: "French ferry terminal from Dover" },
-                { name: "Dover East Breakwater Lt", pos: [51.1158, 1.3425], type: "light", description: "Fl.R.5s - Major navigation light" },
-                { name: "Calais West Pier Lt", pos: [50.9558, 1.8520], type: "light", description: "Fl.G.4s - Port approach light" },
-                { name: "South Goodwin LV", pos: [51.1667, 1.5333], type: "lightvessel", description: "Q.R - Light vessel marking Goodwin Sands" },
-                { name: "Dover TSS Entry", pos: [51.0500, 1.4500], type: "waypoint", description: "Traffic separation scheme entry point" },
-                { name: "East Goodwin Buoy", pos: [51.2000, 1.6000], type: "buoy", description: "Q(3)10s - East cardinal buoy" }
-            ];
-
-            navigationAids.forEach(aid => {
-                let icon, color;
-                
-                switch(aid.type) {
-                    case 'major_port':
-                        icon = '🏢'; color = '#10b981'; break;
-                    case 'light':
-                        icon = '💡'; color = '#fbbf24'; break;
-                    case 'lightvessel':
-                        icon = '🚢'; color = '#f59e0b'; break;
-                    case 'buoy':
-                        icon = '🔴'; color = '#ef4444'; break;
-                    case 'waypoint':
-                        icon = '📍'; color = '#3b82f6'; break;
-                    default:
-                        icon = '⚓'; color = '#6b7280';
-                }
-                
-                const marker = L.marker(aid.pos, {
-                    icon: L.divIcon({
-                        html: `<div style="background: ${color}; color: white; padding: 2px 5px; border-radius: 6px; font-size: 10px; font-weight: bold; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.4); border: 1px solid white; text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">${icon} ${aid.name}</div>`,
-                        className: 'nav-marker',
-                        iconSize: [120, 18],
-                        iconAnchor: [60, 9]
-                    })
-                }).addTo(map);
-
-                marker.bindPopup(`
-                    <div style="text-align: center; min-width: 160px;">
-                        <h3 style="color: ${color}; margin: 0 0 8px 0; font-size: 1em;">${icon} ${aid.name}</h3>
-                        <p style="margin: 0; font-size: 0.85em; color: #333; font-weight: 500;">${aid.description}</p>
-                        <p style="margin: 8px 0 0 0; font-size: 0.75em; color: #666; font-family: monospace;">
-                            ${aid.pos[0].toFixed(4)}°N ${aid.pos[1].toFixed(4)}°E
-                        </p>
-                    </div>
-                `);
-
-                navigationMarkers.push(marker);
-            });
-
-            addHazardMarkers();
-        }
-
-        // Add hazard markers
-        function addHazardMarkers() {
-            const hazards = [
-                { name: "Goodwin Sands", pos: [51.2167, 1.5833], description: "Dangerous sandbank - Ship graveyard" },
-                { name: "Sandettié Bank", pos: [51.1333, 1.7333], description: "Shallow water hazard" },
-                { name: "Ridge Bank", pos: [51.0833, 1.4167], description: "Shallow area - caution" }
-            ];
-
-            hazards.forEach(hazard => {
-                const marker = L.marker(hazard.pos, {
-                    icon: L.divIcon({
-                        html: `<div style="background: #ef4444; color: white; padding: 2px 5px; border-radius: 6px; font-size: 10px; font-weight: bold; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.3); border: 1px solid white; animation: blink 2s infinite;">⚠️ ${hazard.name}</div>`,
-                        className: 'hazard-marker',
-                        iconSize: [120, 18],
-                        iconAnchor: [60, 9]
-                    })
-                }).addTo(map);
-
-                marker.bindPopup(`
-                    <div style="text-align: center; min-width: 150px;">
-                        <h3 style="color: #ef4444; margin: 0 0 5px 0; font-size: 1em;">⚠️ ${hazard.name}</h3>
-                        <p style="margin: 0; font-size: 0.85em; color: #333;">${hazard.description}</p>
-                        <p style="margin: 5px 0 0 0; font-size: 0.75em; color: #666;">
-                            ${hazard.pos[0].toFixed(4)}°N, ${hazard.pos[1].toFixed(4)}°E
-                        </p>
-                    </div>
-                `);
-
-                hazardMarkers.push(marker);
-            });
-        }
-
-        // Toggle markers
-        function toggleNavigationMarkers(show) {
-            navigationMarkers.forEach(marker => {
-                if (show) {
-                    marker.addTo(map);
-                } else {
-                    map.removeLayer(marker);
-                }
-            });
-        }
-
-        function toggleHazardMarkers(show) {
-            hazardMarkers.forEach(marker => {
-                if (show) {
-                    marker.addTo(map);
-                } else {
-                    map.removeLayer(marker);
-                }
-            });
-        }
-
-        // Connection status
-        function updateConnectionStatus(status) {
-            const statusEl = document.getElementById('connectionStatus');
-            statusEl.className = `connection-status status-${status}`;
-            
-            const statusText = {
-                'demo': '🟡 Demo Mode Active',
-                'disconnected': '🔴 Tracking Stopped'
-            };
-            
-            statusEl.textContent = statusText[status];
-        }
-
-        // Elapsed time counter
-        function startElapsedTimeCounter() {
-            elapsedTimeInterval = setInterval(() => {
-                if (trackStartTime && isTracking) {
-                    const now = Date.now();
-                    const userStartTime = new Date(document.getElementById('startTime').value).getTime();
-                    const elapsed = now - userStartTime;
-                    
-                    const hours = Math.floor(Math.abs(elapsed) / (1000 * 60 * 60));
-                    const minutes = Math.floor((Math.abs(elapsed) % (1000 * 60 * 60)) / (1000 * 60));
-                    const seconds = Math.floor((Math.abs(elapsed) % (1000 * 60)) / 1000);
-                    
-                    const prefix = elapsed < 0 ? '-' : '';
-                    document.getElementById('elapsedTime').textContent = 
-                        `${prefix}${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-                }
-            }, 1000);
-        }
-
-        function stopElapsedTimeCounter() {
-            if (elapsedTimeInterval) {
-                clearInterval(elapsedTimeInterval);
-                elapsedTimeInterval = null;
-            }
-        }
-
-        // Tracking functions
+        
         function startTracking() {
-            const button = document.getElementById('trackButton');
+            const btn = document.getElementById('trackBtn');
+            const status = document.getElementById('status');
+            
+            if (!map) {
+                alert('Map not loaded yet. Please wait a moment and try again.');
+                return;
+            }
             
             if (isTracking) {
                 stopTracking();
                 return;
             }
-
-            const startTimeInput = document.getElementById('startTime');
-            if (!startTimeInput.value) {
-                alert('Please enter a start time');
-                return;
-            }
-
-            trackStartTime = Date.now();
+            
             isTracking = true;
-            button.textContent = 'Stop Tracking';
-            button.classList.add('stop');
+            btn.textContent = 'Stop Tracking';
+            btn.style.background = '#f44336';
+            status.innerHTML = '🟢 Tracking Active - Pegasus vessel simulation';
             
-            startElapsedTimeCounter();
-            updateConnectionStatus('demo');
-            
-            // Update start time display
-            const startDate = new Date(startTimeInput.value);
-            document.getElementById('trackStartDisplay').textContent = startDate.toLocaleString('en-GB', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            }) + ' BST';
-            
-            simulateVesselData();
+            console.log('Starting vessel simulation...');
+            simulateVessel();
         }
-
+        
         function stopTracking() {
             isTracking = false;
+            const btn = document.getElementById('trackBtn');
+            const status = document.getElementById('status');
             
-            const button = document.getElementById('trackButton');
-            button.textContent = 'Start Live Tracking';
+            btn.textContent = 'Start Tracking';
+            btn.style.background = '#4caf50';
+            status.innerHTML = '🔴 Tracking Stopped';
             
+            console.log('Tracking stopped');
+        }
+        
+        function simulateVessel() {
+            if (!isTracking || !map) return;
+            
+            // Simulate vessel movement in Dover Strait
+            const positions = [
+                {lat: 51.1279, lng: 1.3134, speed: 12.5, course: 95},  // Dover
+                {lat: 51.1150, lng: 1.4200, speed: 13.2, course: 98},  // Dover Strait
+                {lat: 51.1000, lng: 1.5500, speed: 11.8, course: 102}, // Approaching Calais
+                {lat: 50.9513, lng: 1.8587, speed: 8.0, course: 120}   // Calais
+            ];
+            
+            let currentPos = 0;
+            
+            function updatePosition() {
+                if (!isTracking || currentPos >= positions.length || !map) return;
+                
+                const pos = positions[currentPos];
+                const time = new Date().toLocaleTimeString();
+                
+                // Update vessel marker
+                if (vesselMarker) {
+                    map.removeLayer(vesselMarker);
+                }
+                
+                vesselMarker = L.circleMarker([pos.lat, pos.lng], {
+                    radius: 10,
+                    fillColor: '#ff4444',
+                    color: '#ffffff',
+                    weight: 3,
+                    opacity: 1,
+                    fillOpacity: 0.9
+                }).addTo(map);
+                
+                vesselMarker.bindPopup(`
+                    <b>🚢 Pegasus</b><br>
+                    MMSI: 232018618<br>
+                    Speed: ${pos.speed} knots<br>
+                    Course: ${pos.course}°<br>
+                    Time: ${time}
+                `);
+                
+                // Update track line
+                trackPoints.push([pos.lat, pos.lng]);
+                if (trackLine) {
+                    map.removeLayer(trackLine);
+                }
+                
+                if (trackPoints.length > 1) {
+                    trackLine = L.polyline(trackPoints, {
+                        color: '#0066cc',
+                        weight: 3,
+                        opacity: 0.7
+                    }).addTo(map);
+                }
+                
+                // Update info panel
+                document.getElementById('position').textContent = `${pos.lat.toFixed(4)}°N, ${pos.lng.toFixed(4)}°E`;
+                document.getElementById('speed').textContent = `${pos.speed} knots`;
+                document.getElementById('course').textContent = `${pos.course}°`;
+                document.getElementById('time').textContent = time;
+                
+                // Pan map to vessel
+                map.setView([pos.lat, pos.lng], map.getZoom());
+                
+                console.log(`Pegasus at position ${currentPos + 1}:`, pos);
+                
+                currentPos++;
+                
+                // Schedule next update
+                if (currentPos < positions.length) {
+                    setTimeout(updatePosition, 4000); // Update every 4 seconds
+                } else {
+                    // Restart simulation
+                    setTimeout(() => {
+                        currentPos = 0;
+                        trackPoints = [];
+                        if (trackLine) {
+                            map.removeLayer(trackLine);
+                            trackLine = null;
+                        }
+                        updatePosition();
+                    }, 6000);
+                }
+            }
+            
+            updatePosition();
+        }
+        
+        // Set default start time
+        function setDefaultTime() {
+            const now = new Date();
+            now.setHours(3, 39, 0, 0);
+            const timeInput = document.getElementById('startTime');
+            if (timeInput) {
+                timeInput.value = now.toISOString().slice(0, 16);
+            }
+        }
+        
+        // Start initialization when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing...');
+            document.getElementById('status').innerHTML = '⏳ Loading map library...';
+            setDefaultTime();
+            loadLeaflet();
+        });
+        
+        // Fallback initialization
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                if (!map && typeof L === 'undefined') {
+                    console.log('Fallback: Trying to load Leaflet again...');
+                    loadLeaflet();
+                }
+            }, 2000);
+        });
+        
+        console.log('Pegasus Tracker script loaded');
+    </script>
+</body>
+</html>
