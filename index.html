@@ -1,26 +1,644 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Pegasus Vessel Tracker</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="style.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pegasus Vessel Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #1565c0, #0d47a1);
+            color: white;
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #1565c0, #0d47a1);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            border-bottom: 3px solid #ffd700;
+            position: relative;
+            z-index: 100;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+            margin: 0;
+        }
+        
+        .controls {
+            background: linear-gradient(135deg, #2196f3, #1976d2);
+            padding: 15px;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 100;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .controls label {
+            font-weight: bold;
+            color: #e3f2fd;
+        }
+        
+        .controls input {
+            padding: 10px 12px;
+            border: 2px solid white;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.9);
+            color: #333;
+            font-size: 14px;
+            min-width: 180px;
+        }
+        
+        .controls input::placeholder {
+            color: rgba(255,255,255,0.7);
+        }
+        
+        .controls button {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #4caf50, #45a049);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+        }
+        
+        .controls button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.6);
+        }
+        
+        .controls button.stop {
+            background: linear-gradient(135deg, #f44336, #d32f2f);
+            box-shadow: 0 4px 15px rgba(244, 67, 54, 0.4);
+        }
+        
+        .controls button.stop:hover {
+            box-shadow: 0 6px 20px rgba(244, 67, 54, 0.6);
+        }
+        
+        .map-container {
+            margin: 20px;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+        }
+        
+        .map-header {
+            background: #2196f3;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        
+        #map {
+            height: 500px;
+            position: relative;
+            background: linear-gradient(45deg, #e3f2fd 25%, #bbdefb 25%, #bbdefb 50%, #e3f2fd 50%, #e3f2fd 75%, #bbdefb 75%);
+            background-size: 40px 40px;
+            overflow: hidden;
+        }
+        
+        .vessel {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #ff4444;
+            border: 3px solid white;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 20px rgba(255, 68, 68, 0.8);
+            animation: pulse 2s infinite;
+            z-index: 100;
+        }
+        
+        .vessel::after {
+            content: '🚢';
+            position: absolute;
+            top: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 16px;
+        }
+        
+        @keyframes pulse {
+            0% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.2); }
+            100% { transform: translate(-50%, -50%) scale(1); }
+        }
+        
+        .port {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: #4caf50;
+            border: 2px solid white;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+        }
+        
+        .port::after {
+            content: attr(data-name);
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            white-space: nowrap;
+        }
+        
+        .track-line {
+            position: absolute;
+            height: 3px;
+            background: #2196f3;
+            transform-origin: left center;
+            opacity: 0.7;
+            z-index: 50;
+        }
+        
+        .info-panel {
+            background: linear-gradient(135deg, #1565c0, #0d47a1);
+            color: white;
+            padding: 20px;
+            margin: 0;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .info-card {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid #3b82f6;
+            backdrop-filter: blur(5px);
+        }
+        
+        .info-card h4 {
+            color: #60a5fa;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .info-card p {
+            font-size: 1.1em;
+            line-height: 1.5;
+        }
+        
+        .status {
+            text-align: center;
+            font-size: 1.2em;
+            font-weight: bold;
+            padding: 15px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        
+        .status.active {
+            background: rgba(76, 175, 80, 0.3);
+            border: 2px solid #4caf50;
+        }
+        
+        .status.stopped {
+            background: rgba(244, 67, 54, 0.3);
+            border: 2px solid #f44336;
+        }
+        
+        .coordinates {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            #map {
+                height: 300px;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
-  <header>
-    <h1>Pegasus Vessel Tracker</h1>
-  </header>
+    <div class="header">
+        <h1>⚓ Pegasus Vessel Tracker</h1>
+        <p>Dover Strait Maritime Navigation | MMSI: 232018618</p>
+    </div>
 
-  <div class="controls">
-    <input type="datetime-local" id="startTime" />
-    <button onclick="startTracking()">🚢 Start Pegasus Tracking</button>
-    <button onclick="stopTracking()" class="stop">⏹️ Stop Tracking</button>
-  </div>
+    <div class="controls">
+        <div class="control-group">
+            <label>Start Time (BST)</label>
+            <input type="datetime-local" id="startTime" value="2025-06-26T03:39">
+        </div>
+        <div class="control-group">
+            <label>Control</label>
+            <button onclick="toggleTracking()" id="trackBtn">Start Tracking</button>
+        </div>
+    </div>
 
-  <div id="map"></div>
+    <div class="map-container">
+        <div id="map">
+            <div class="map-content" id="mapContent">
+                <div class="chart-grid"></div>
+                <div class="depth-contours"></div>
+                <!-- Ports and vessels will be added here -->
+            </div>
+            <div class="zoom-controls">
+                <div class="zoom-btn" onclick="zoomIn()">+</div>
+                <div class="zoom-btn" onclick="zoomOut()">−</div>
+                <div class="zoom-btn" onclick="resetZoom()">⌂</div>
+            </div>
+            <div class="coordinates" id="coordinates">Dover Strait Chart</div>
+        </div>
+    </div>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="script.js"></script>
+    <div class="info-panel">
+        <h3>📡 Pegasus Vessel - Live Navigation</h3>
+        <div class="status" id="status">🔍 Ready to begin tracking</div>
+        
+        <div class="info-grid">
+            <div class="info-card">
+                <h4>🔍 Status</h4>
+                <p id="trackingStatus">Waiting to start</p>
+            </div>
+            <div class="info-card">
+                <h4>📍 Position</h4>
+                <p id="position">--°N, --°E</p>
+            </div>
+            <div class="info-card">
+                <h4>🧭 Navigation</h4>
+                <p id="navigation">Speed: -- knots<br>Course: --°</p>
+            </div>
+            <div class="info-card">
+                <h4>⏱️ Time</h4>
+                <p id="timeInfo">--:--:--</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        console.log('🚢 Pegasus Tracker initializing...');
+        
+        let isTracking = false;
+        let vesselElement = null;
+        let currentPosition = 0;
+        let trackLines = [];
+        let startTime = null;
+        let currentZoom = 1;
+        let isPanning = false;
+        let lastX = 0;
+        let lastY = 0;
+        let translateX = 0;
+        let translateY = 0;
+        
+        // Dover Strait coordinates (scaled for display)
+        const mapWidth = window.innerWidth;
+        const mapHeight = window.innerHeight * 0.7;
+        
+        // Real coordinates converted to pixel positions
+        const ports = [
+            {name: "Dover", realLat: 51.1279, realLng: 1.3134, x: mapWidth * 0.25, y: mapHeight * 0.3},
+            {name: "Calais", realLat: 50.9513, realLng: 1.8587, x: mapWidth * 0.75, y: mapHeight * 0.6},
+            {name: "Boulogne", realLat: 50.7264, realLng: 1.6147, x: mapWidth * 0.55, y: mapHeight * 0.8},
+            {name: "Margate", realLat: 51.3813, realLng: 1.3862, x: mapWidth * 0.35, y: mapHeight * 0.2}
+        ];
+        
+        // Vessel route through Dover Strait
+        const route = [
+            {name: "Dover Port", x: mapWidth * 0.25, y: mapHeight * 0.3, speed: 0, course: 0, realLat: 51.1279, realLng: 1.3134},
+            {name: "Dover Strait", x: mapWidth * 0.43, y: mapHeight * 0.4, speed: 12.5, course: 95, realLat: 51.1150, realLng: 1.4200},
+            {name: "Mid Channel", x: mapWidth * 0.62, y: mapHeight * 0.5, speed: 13.2, course: 98, realLat: 51.1000, realLng: 1.5500},
+            {name: "Calais Approach", x: mapWidth * 0.72, y: mapHeight * 0.56, speed: 11.8, course: 102, realLat: 50.9700, realLng: 1.8000},
+            {name: "Calais Port", x: mapWidth * 0.75, y: mapHeight * 0.6, speed: 8.0, course: 120, realLat: 50.9513, realLng: 1.8587}
+        ];
+        
+        function initializeMap() {
+            const mapContent = document.getElementById('mapContent');
+            
+            // Add ports to map
+            ports.forEach(port => {
+                const portElement = document.createElement('div');
+                portElement.className = 'port';
+                portElement.style.left = port.x + 'px';
+                portElement.style.top = port.y + 'px';
+                portElement.setAttribute('data-name', port.name);
+                portElement.title = `${port.name} - ${port.realLat.toFixed(4)}°N, ${port.realLng.toFixed(4)}°E`;
+                mapContent.appendChild(portElement);
+            });
+            
+            // Add pan functionality
+            setupPanAndZoom();
+            
+            console.log('✅ Map initialized with ports and zoom controls');
+        }
+        
+        function setupPanAndZoom() {
+            const map = document.getElementById('map');
+            const mapContent = document.getElementById('mapContent');
+            
+            map.addEventListener('mousedown', startPan);
+            map.addEventListener('mousemove', pan);
+            map.addEventListener('mouseup', endPan);
+            map.addEventListener('mouseleave', endPan);
+            
+            // Touch events for mobile
+            map.addEventListener('touchstart', startPanTouch);
+            map.addEventListener('touchmove', panTouch);
+            map.addEventListener('touchend', endPan);
+            
+            // Zoom with mouse wheel
+            map.addEventListener('wheel', handleZoom);
+        }
+        
+        function startPan(e) {
+            isPanning = true;
+            lastX = e.clientX;
+            lastY = e.clientY;
+            e.preventDefault();
+        }
+        
+        function startPanTouch(e) {
+            isPanning = true;
+            lastX = e.touches[0].clientX;
+            lastY = e.touches[0].clientY;
+            e.preventDefault();
+        }
+        
+        function pan(e) {
+            if (!isPanning) return;
+            
+            const deltaX = e.clientX - lastX;
+            const deltaY = e.clientY - lastY;
+            
+            translateX += deltaX;
+            translateY += deltaY;
+            
+            updateMapTransform();
+            
+            lastX = e.clientX;
+            lastY = e.clientY;
+            e.preventDefault();
+        }
+        
+        function panTouch(e) {
+            if (!isPanning) return;
+            
+            const deltaX = e.touches[0].clientX - lastX;
+            const deltaY = e.touches[0].clientY - lastY;
+            
+            translateX += deltaX;
+            translateY += deltaY;
+            
+            updateMapTransform();
+            
+            lastX = e.touches[0].clientX;
+            lastY = e.touches[0].clientY;
+            e.preventDefault();
+        }
+        
+        function endPan() {
+            isPanning = false;
+        }
+        
+        function handleZoom(e) {
+            e.preventDefault();
+            
+            const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+            currentZoom *= zoomFactor;
+            currentZoom = Math.max(0.5, Math.min(3, currentZoom));
+            
+            updateMapTransform();
+        }
+        
+        function zoomIn() {
+            currentZoom = Math.min(3, currentZoom * 1.2);
+            updateMapTransform();
+        }
+        
+        function zoomOut() {
+            currentZoom = Math.max(0.5, currentZoom * 0.8);
+            updateMapTransform();
+        }
+        
+        function resetZoom() {
+            currentZoom = 1;
+            translateX = 0;
+            translateY = 0;
+            updateMapTransform();
+        }
+        
+        function updateMapTransform() {
+            const mapContent = document.getElementById('mapContent');
+            mapContent.style.transform = `translate(${translateX}px, ${translateY}px) scale(${currentZoom})`;
+        }
+        
+        function toggleTracking() {
+            const btn = document.getElementById('trackBtn');
+            const status = document.getElementById('status');
+            
+            if (isTracking) {
+                stopTracking();
+            } else {
+                startTracking();
+            }
+        }
+        
+        function startTracking() {
+            isTracking = true;
+            startTime = Date.now();
+            currentPosition = 0;
+            
+            const btn = document.getElementById('trackBtn');
+            const status = document.getElementById('status');
+            
+            btn.textContent = 'Stop Tracking';
+            btn.className = 'stop';
+            status.textContent = '🟢 Tracking Active - Pegasus Moving';
+            status.className = 'status active';
+            
+            document.getElementById('trackingStatus').textContent = 'Active - Demo Mode';
+            
+            console.log('🟢 Tracking started');
+            animateVessel();
+        }
+        
+        function stopTracking() {
+            isTracking = false;
+            
+            const btn = document.getElementById('trackBtn');
+            const status = document.getElementById('status');
+            
+            btn.textContent = 'Start Tracking';
+            btn.className = '';
+            status.textContent = '🔴 Tracking Stopped';
+            status.className = 'status stopped';
+            
+            document.getElementById('trackingStatus').textContent = 'Stopped';
+            
+            // Clear vessel
+            if (vesselElement) {
+                vesselElement.remove();
+                vesselElement = null;
+            }
+            
+            // Clear track lines
+            trackLines.forEach(line => line.remove());
+            trackLines = [];
+            
+            console.log('🔴 Tracking stopped');
+        }
+        
+        function animateVessel() {
+            if (!isTracking || currentPosition >= route.length) {
+                if (isTracking) {
+                    // Restart route
+                    setTimeout(() => {
+                        currentPosition = 0;
+                        trackLines.forEach(line => line.remove());
+                        trackLines = [];
+                        if (vesselElement) {
+                            vesselElement.remove();
+                            vesselElement = null;
+                        }
+                        animateVessel();
+                    }, 3000);
+                }
+                return;
+            }
+            
+            const position = route[currentPosition];
+            const mapContent = document.getElementById('mapContent');
+            
+            // Create or update vessel marker
+            if (!vesselElement) {
+                vesselElement = document.createElement('div');
+                vesselElement.className = 'vessel';
+                mapContent.appendChild(vesselElement);
+            }
+            
+            // Move vessel to new position
+            vesselElement.style.left = position.x + 'px';
+            vesselElement.style.top = position.y + 'px';
+            
+            // Add track line from previous position
+            if (currentPosition > 0) {
+                const prevPosition = route[currentPosition - 1];
+                const trackLine = document.createElement('div');
+                trackLine.className = 'track-line';
+                
+                const dx = position.x - prevPosition.x;
+                const dy = position.y - prevPosition.y;
+                const length = Math.sqrt(dx * dx + dy * dy);
+                const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+                
+                trackLine.style.left = prevPosition.x + 'px';
+                trackLine.style.top = prevPosition.y + 'px';
+                trackLine.style.width = length + 'px';
+                trackLine.style.transform = `rotate(${angle}deg)`;
+                
+                mapContent.appendChild(trackLine);
+                trackLines.push(trackLine);
+            }
+            
+            // Update info panel
+            const now = new Date();
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const hours = Math.floor(elapsed / 3600);
+            const minutes = Math.floor((elapsed % 3600) / 60);
+            const seconds = elapsed % 60;
+            
+            document.getElementById('position').textContent = 
+                `${position.realLat.toFixed(4)}°N, ${position.realLng.toFixed(4)}°E`;
+            document.getElementById('navigation').innerHTML = 
+                `Speed: ${position.speed} knots<br>Course: ${position.course}°`;
+            document.getElementById('timeInfo').textContent = 
+                `${hours.toString().padStart(2,'0')}:${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}`;
+            document.getElementById('coordinates').textContent = 
+                `${position.name} - Zoom: ${currentZoom.toFixed(1)}x`;
+            
+            console.log(`🚢 Pegasus at ${position.name}: ${position.realLat.toFixed(4)}°N, ${position.realLng.toFixed(4)}°E`);
+            
+            currentPosition++;
+            
+            // Schedule next update
+            setTimeout(animateVessel, 4000); // Move every 4 seconds
+        }
+        
+        // Initialize everything when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('📄 DOM loaded');
+            
+            // Set default time
+            const now = new Date();
+            now.setHours(3, 39, 0, 0);
+            document.getElementById('startTime').value = now.toISOString().slice(0, 16);
+            
+            // Initialize map
+            initializeMap();
+            
+            console.log('🎯 Pegasus Tracker ready!');
+        });
+        
+        console.log('📜 Script loaded');
+    </script>
 </body>
 </html>
