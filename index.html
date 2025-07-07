@@ -109,7 +109,7 @@
             border: none;
             border-radius: 3px;
             cursor: pointer;
-            opacity: 0;
+            opacity: 1;
         }
         
         .controls button:hover {
@@ -131,6 +131,7 @@
     var mmsi="232018618";     // display latest position (by MMSI)
     var imo="";        // display latest position (by IMO, overrides MMSI)
     var show_track=true;     // display track line (last 24 hours)
+    var fleet_timespan="1"; // maximum age in minutes of the displayed ship positions
 </script>
 
 <script type="text/javascript" src="https://www.vesselfinder.com/aismap.js"></script>
