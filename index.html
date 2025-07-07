@@ -120,21 +120,16 @@
     <script type="text/javascript">
     // Map appearance
     var width="100%";         // width in pixels or percentage
-    var height="300";         // height in pixels
-    var latitude="0.00";      // center latitude (decimal degrees)
-    var longitude="0.00";     // center longitude (decimal degrees)
-    var zoom="3";             // initial zoom (between 3 and 18)
-    var names=false;          // always show ship names (defaults to false)
+    var height="100%";         // height in pixels
+    var latitude="51.00";      // center latitude (decimal degrees)
+    var longitude="1.50";     // center longitude (decimal degrees)
+    var zoom="10";             // initial zoom (between 3 and 18)
+    var names=true;          // always show ship names (defaults to false)
 
     // Single ship tracking
     var mmsi="232018618";     // display latest position (by MMSI)
     var imo="";        // display latest position (by IMO, overrides MMSI)
     var show_track=true;     // display track line (last 24 hours)
-
-    // Fleet tracking
-    var fleet=""; // your personal Fleet key (displayed in your User Profile)
-    var fleet_name="CS&PF"; // display particular fleet from your fleet list
-    var fleet_timespan="1440"; // maximum age in minutes of the displayed ship positions
 </script>
 
 <script type="text/javascript" src="https://www.vesselfinder.com/aismap.js"></script>
