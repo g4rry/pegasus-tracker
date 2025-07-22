@@ -15,32 +15,10 @@
             width: 100%;
             height: 900px;
         }
-        #controls {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            z-index: 1000;
-            background: white;
-            padding: 10px;
-            border-radius: 5px;
-            box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
-        }
-        #controls label {
-            margin-right: 10px;
-        }
     </style>
 </head>
 <body>
     <h1>Live Vessel Tracking - Dover, England</h1>
-    <div id="controls">
-        <label for="markerMode">Marker Display:</label>
-        <select id="markerMode">
-            <option value="popups">Markers with Popups</option>
-            <option value="markers">Markers Only</option>
-            <option value="none">No Markers</option>
-        </select>
-        <label><input type="checkbox" id="chartOverlay"> Nautical Chart Overlay</input></label>
-    </div>
     <div id="map"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -53,23 +31,11 @@
             attribution: '© <a href="http://www.openseamap.org">OpenSeaMap</a> contributors'
         }).addTo(map);
 
-        // Optional base layer: OpenStreetMap (for context under nautical overlay)
-        const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        }).addTo(map);
-
-        // Optional chart overlay: OpenSeaMap nautical features (e.g., depth contours)
+        // Nautical chart overlay: OpenSeaMap (always active)
         const chartOverlay = L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png', {
             attribution: '© <a href="http://www.openseamap.org">OpenSeaMap</a>',
             opacity: 0.8
-        });
-
-        // Layer control for base layers
-        const baseLayers = {
-            "OpenSeaMap": seaMap,
-            "OpenStreetMap": osmLayer
-        };
-        L.control.layers(baseLayers).addTo(map);
+        }).addTo(map);
 
         // Store markers and track lines
         const markers = {};
@@ -97,27 +63,12 @@
                 const mmsi = data.MetaData.MMSI;
                 const lat = data.Message.PositionReport.Latitude;
                 const lon = data.Message.PositionReport.Longitude;
-                const name = data.MetaData.ShipName || 'Unknown';
 
-                // Update or create marker based on display mode
-                const markerMode = document.getElementById('markerMode').value;
-                if (markerMode !== 'none') {
-                    if (markers[mmsi]) {
-                        markers[mmsi].setLatLng([lat, lon]);
-                        if (markerMode === 'popups') {
-                            markers[mmsi].setPopupContent(`Ship: ${name} (MMSI: ${mmsi})`);
-                        } else {
-                            markers[mmsi].setPopupContent(''); // Clear popup for "Markers Only"
-                        }
-                    } else {
-                        markers[mmsi] = L.marker([lat, lon])
-                            .addTo(map)
-                            .bindPopup(markerMode === 'popups' ? `Ship: ${name} (MMSI: ${mmsi})` : '');
-                        if (markerMode === 'popups') markers[mmsi].openPopup();
-                    }
-                } else if (markers[mmsi]) {
-                    map.removeLayer(markers[mmsi]);
-                    delete markers[mmsi];
+                // Update or create marker (Markers Only mode, no popups)
+                if (markers[mmsi]) {
+                    markers[mmsi].setLatLng([lat, lon]);
+                } else {
+                    markers[mmsi] = L.marker([lat, lon]).addTo(map);
                 }
 
                 // Update track
@@ -152,31 +103,6 @@
         ws.onerror = (error) => {
             console.error('WebSocket error:', error);
         };
-
-        // Handle marker display mode changes
-        document.getElementById('markerMode').addEventListener('change', (e) => {
-            const mode = e.target.value;
-            Object.values(markers).forEach(marker => {
-                const latlng = marker.getLatLng();
-                const popupContent = marker.getPopup()?.getContent() || '';
-                if (mode === 'none') {
-                    map.removeLayer(marker);
-                } else {
-                    if (!map.hasLayer(marker)) marker.addTo(map);
-                    if (mode === 'popups' && popupContent) marker.openPopup();
-                    else marker.closePopup();
-                }
-            });
-        });
-
-        // Handle chart overlay toggle
-        document.getElementById('chartOverlay').addEventListener('change', (e) => {
-            if (e.target.checked) {
-                chartOverlay.addTo(map);
-            } else {
-                map.removeLayer(chartOverlay);
-            }
-        });
     </script>
 </body>
 </html>
