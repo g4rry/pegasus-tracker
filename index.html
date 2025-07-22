@@ -3,48 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live AIS Vessel Tracking</title>
+    <title>Live AIS Vessel Tracking - Dover</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         body {
             margin: 0;
-            padding: 0;
+            padding: 10px;
             font-family: Arial, sans-serif;
         }
         #map {
             width: 100%;
             height: 900px;
         }
+        #controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+        }
+        #controls label {
+            margin-right: 10px;
+        }
     </style>
 </head>
 <body>
-    <h1>Live Vessel Tracking</h1>
+    <h1>Live Vessel Tracking - Dover, England</h1>
+    <div id="controls">
+        <label for="markerMode">Marker Display:</label>
+        <select id="markerMode">
+            <option value="popups">Markers with Popups</option>
+            <option value="markers">Markers Only</option>
+            <option value="none">No Markers</option>
+        </select>
+        <label><input type="checkbox" id="chartOverlay"> Nautical Chart Overlay</input></label>
+    </div>
     <div id="map"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Initialize Leaflet map
-        const map = L.map('map').setView([51.0, 1.1], 5);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        // Initialize Leaflet map, centered on Dover, England
+        const map = L.map('map').setView([51.1279, 1.3134], 12);
+
+        // Base layer: OpenSeaMap
+        const seaMap = L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png', {
+            attribution: '© <a href="http://www.openseamap.org">OpenSeaMap</a> contributors'
+        }).addTo(map);
+
+        // Optional base layer: OpenStreetMap (for context under nautical overlay)
+        const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         }).addTo(map);
 
-        // Store markers and track points
+        // Optional chart overlay: OpenSeaMap nautical features (e.g., depth contours)
+        const chartOverlay = L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png', {
+            attribution: '© <a href="http://www.openseamap.org">OpenSeaMap</a>',
+            opacity: 0.8
+        });
+
+        // Layer control for base layers
+        const baseLayers = {
+            "OpenSeaMap": seaMap,
+            "OpenStreetMap": osmLayer
+        };
+        L.control.layers(baseLayers).addTo(map);
+
+        // Store markers and track lines
         const markers = {};
         const tracks = {};
         const maxTrackPoints = 24 * 60; // Approx. 24 hours of 1-minute updates
 
         // Connect to aisstream.io WebSocket
         const ws = new WebSocket('wss://stream.aisstream.io/v0/stream');
-        const apiKey = 'YOUR_AISSTREAM_API_KEY'; // Replace with your aisstream.io API key
+        const apiKey = '41c24b15f1ef840dead484ddca67daf39246150d';
 
         ws.onopen = () => {
             // Subscribe to AIS data for MMSI 232018618
             const subscription = {
                 ApiKey: apiKey,
-                BoundingBoxes: [[[-90, -180], [90, 180]]], // Global bounding box
+                BoundingBoxes: [[[50.5, 0.5], [51.5, 2.0]]], // Bounding box around Dover
                 FiltersShipMMSI: ['232018618'], // Track specific MMSI
-                FilterMessageTypes: ['PositionReport'] // Only position reports
+                FilterMessageTypes: ['PositionReport']
             };
             ws.send(JSON.stringify(subscription));
         };
@@ -57,13 +99,25 @@
                 const lon = data.Message.PositionReport.Longitude;
                 const name = data.MetaData.ShipName || 'Unknown';
 
-                // Update or create marker
-                if (markers[mmsi]) {
-                    markers[mmsi].setLatLng([lat, lon]).setPopupContent(`Ship: ${name} (MMSI: ${mmsi})`);
-                } else {
-                    markers[mmsi] = L.marker([lat, lon])
-                        .addTo(map)
-                        .bindPopup(`Ship: ${name} (MMSI: ${mmsi})`);
+                // Update or create marker based on display mode
+                const markerMode = document.getElementById('markerMode').value;
+                if (markerMode !== 'none') {
+                    if (markers[mmsi]) {
+                        markers[mmsi].setLatLng([lat, lon]);
+                        if (markerMode === 'popups') {
+                            markers[mmsi].setPopupContent(`Ship: ${name} (MMSI: ${mmsi})`);
+                        } else {
+                            markers[mmsi].setPopupContent(''); // Clear popup for "Markers Only"
+                        }
+                    } else {
+                        markers[mmsi] = L.marker([lat, lon])
+                            .addTo(map)
+                            .bindPopup(markerMode === 'popups' ? `Ship: ${name} (MMSI: ${mmsi})` : '');
+                        if (markerMode === 'popups') markers[mmsi].openPopup();
+                    }
+                } else if (markers[mmsi]) {
+                    map.removeLayer(markers[mmsi]);
+                    delete markers[mmsi];
                 }
 
                 // Update track
@@ -74,7 +128,7 @@
                 const latlngs = track.getLatLngs();
                 latlngs.push([lat, lon]);
                 if (latlngs.length > maxTrackPoints) {
-                    latlngs.shift(); // Remove oldest point to limit track length
+                    latlngs.shift();
                 }
                 track.setLatLngs(latlngs);
 
@@ -98,6 +152,31 @@
         ws.onerror = (error) => {
             console.error('WebSocket error:', error);
         };
+
+        // Handle marker display mode changes
+        document.getElementById('markerMode').addEventListener('change', (e) => {
+            const mode = e.target.value;
+            Object.values(markers).forEach(marker => {
+                const latlng = marker.getLatLng();
+                const popupContent = marker.getPopup()?.getContent() || '';
+                if (mode === 'none') {
+                    map.removeLayer(marker);
+                } else {
+                    if (!map.hasLayer(marker)) marker.addTo(map);
+                    if (mode === 'popups' && popupContent) marker.openPopup();
+                    else marker.closePopup();
+                }
+            });
+        });
+
+        // Handle chart overlay toggle
+        document.getElementById('chartOverlay').addEventListener('change', (e) => {
+            if (e.target.checked) {
+                chartOverlay.addTo(map);
+            } else {
+                map.removeLayer(chartOverlay);
+            }
+        });
     </script>
 </body>
 </html>
