@@ -52,58 +52,69 @@
 
         // Connect to aisstream.io WebSocket
         const ws = new WebSocket('wss://stream.aisstream.io/v0/stream');
-        const apiKey = '41c24b15f1ef schn84ddca67daf39246150d';
+        const apiKey = '41c24b15f1ef840dead484ddca67daf39246150d';
 
         ws.onopen = () => {
-            console.log('WebSocket connected');
-            // Subscribe to AIS data for MMSI 210385000 (and fallback MMSI 316001245)
+            console.log('WebSocket connected at', new Date().toISOString());
+            // Subscribe to AIS data for MMSI 227022800
             const subscription = {
                 ApiKey: apiKey,
                 BoundingBoxes: [[[50.9, 1.7], [51.2, 2.0]]], // Bounding box for Dover-Calais
-                FiltersShipMMSI: ['210385000', '316001245'], // Track primary and fallback MMSI
+                FiltersShipMMSI: ['227022800'], // Track confirmed active MMSI
                 FilterMessageTypes: ['PositionReport']
             };
             ws.send(JSON.stringify(subscription));
             console.log('Subscription sent:', JSON.stringify(subscription));
+
+            // Warn if no data received within 30 seconds
+            setTimeout(() => {
+                if (Object.keys(markers).length === 0) {
+                    console.warn('No AIS data received after 30 seconds. Check API key, MMSI, or aisstream.io status.');
+                }
+            }, 30000);
         };
 
         ws.onmessage = (event) => {
-            console.log('WebSocket message received:', event.data);
-            const data = JSON.parse(event.data);
-            if (data.MessageType === 'PositionReport') {
-                const mmsi = data.MetaData.MMSI;
-                const lat = data.Message.PositionReport.Latitude;
-                const lon = data.Message.PositionReport.Longitude;
-                console.log(`Position for MMSI ${mmsi}: Lat ${lat}, Lon ${lon}`);
+            console.log('WebSocket message received at', new Date().toISOString(), ':', event.data);
+            try {
+                const data = JSON.parse(event.data);
+                if (data.MessageType === 'PositionReport') {
+                    const mmsi = data.MetaData.MMSI;
+                    const lat = data.Message.PositionReport.Latitude;
+                    const lon = data.Message.PositionReport.Longitude;
+                    console.log(`Position for MMSI ${mmsi}: Lat ${lat}, Lon ${lon}, Time ${data.MetaData.time_utc}`);
 
-                // Update or create marker (Markers Only mode, no popups)
-                if (markers[mmsi]) {
-                    markers[mmsi].setLatLng([lat, lon]);
+                    // Update or create marker (Markers Only mode, no popups)
+                    if (markers[mmsi]) {
+                        markers[mmsi].setLatLng([lat, lon]);
+                    } else {
+                        markers[mmsi] = L.marker([lat, lon]).addTo(map);
+                    }
+
+                    // Update track
+                    if (!tracks[mmsi]) {
+                        tracks[mmsi] = L.polyline([], { color: '#0000FF', weight: 2 }).addTo(map);
+                    }
+                    const track = tracks[mmsi];
+                    const latlngs = track.getLatLngs();
+                    latlngs.push([lat, lon]);
+                    if (latlngs.length > maxTrackPoints) {
+                        latlngs.shift();
+                    }
+                    track.setLatLngs(latlngs);
+
+                    // Center map on the latest position
+                    map.panTo([lat, lon]);
                 } else {
-                    markers[mmsi] = L.marker([lat, lon]).addTo(map);
+                    console.log('Non-PositionReport message:', data);
                 }
-
-                // Update track
-                if (!tracks[mmsi]) {
-                    tracks[mmsi] = L.polyline([], { color: '#0000FF', weight: 2 }).addTo(map);
-                }
-                const track = tracks[mmsi];
-                const latlngs = track.getLatLngs();
-                latlngs.push([lat, lon]);
-                if (latlngs.length > maxTrackPoints) {
-                    latlngs.shift();
-                }
-                track.setLatLngs(latlngs);
-
-                // Center map on the latest position
-                map.panTo([lat, lon]);
-            } else {
-                console.log('Non-PositionReport message:', data);
+            } catch (error) {
+                console.error('Error parsing WebSocket message:', error, event.data);
             }
         };
 
         ws.onclose = () => {
-            console.log('WebSocket connection closed. Reconnecting...');
+            console.log('WebSocket connection closed at', new Date().toISOString(), '. Reconnecting...');
             setTimeout(() => {
                 const newWs = new WebSocket('wss://stream.aisstream.io/v0/stream');
                 newWs.onopen = ws.onopen;
@@ -115,7 +126,7 @@
         };
 
         ws.onerror = (error) => {
-            console.error('WebSocket error:', error);
+            console.error('WebSocket error at', new Date().toISOString(), ':', error);
         };
     </script>
 </body>
