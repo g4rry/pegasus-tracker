@@ -26,16 +26,24 @@
         // Initialize Leaflet map, centered on Dover, England
         const map = L.map('map').setView([51.1279, 1.3134], 12);
 
-        // Base layer: OpenSeaMap
-        const seaMap = L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png', {
-            attribution: '© <a href="http://www.openseamap.org">OpenSeaMap</a> contributors'
+        // Base layer: OpenStreetMap
+        const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            maxZoom: 19
         }).addTo(map);
 
-        // Nautical chart overlay: OpenSeaMap (always active)
-        const chartOverlay = L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png', {
-            attribution: '© <a href="http://www.openseamap.org">OpenSeaMap</a>',
-            opacity: 0.8
+        // Nautical chart overlay: OpenSeaMap
+        const seaMapOverlay = L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png', {
+            attribution: '© <a href="http://www.openseamap.org">OpenSeaMap</a> contributors',
+            maxZoom: 19,
+            opacity: 0.8,
+            errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFhAJ/wlseKgAAAABJRU5ErkJggg==' // Transparent fallback
         }).addTo(map);
+
+        // Handle tile loading errors
+        seaMapOverlay.on('tileerror', (error, tile) => {
+            console.error('OpenSeaMap tile error:', error, tile);
+        });
 
         // Store markers and track lines
         const markers = {};
