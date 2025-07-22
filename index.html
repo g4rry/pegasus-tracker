@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live AIS Vessel Tracking - Dover</title>
+    <title>Live AIS Vessel Tracking - Dover to Calais</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         body {
@@ -18,7 +18,7 @@
     </style>
 </head>
 <body>
-    <h1>Live Vessel Tracking - Dover, England</h1>
+    <h1>Live Vessel Tracking - Dover to Calais</h1>
     <div id="map"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -52,25 +52,29 @@
 
         // Connect to aisstream.io WebSocket
         const ws = new WebSocket('wss://stream.aisstream.io/v0/stream');
-        const apiKey = '41c24b15f1ef840dead484ddca67daf39246150d';
+        const apiKey = '41c24b15f1ef schn84ddca67daf39246150d';
 
         ws.onopen = () => {
-            // Subscribe to AIS data for MMSI 210385000
+            console.log('WebSocket connected');
+            // Subscribe to AIS data for MMSI 210385000 (and fallback MMSI 316001245)
             const subscription = {
                 ApiKey: apiKey,
-                BoundingBoxes: [[[50.5, 0.5], [51.5, 2.0]]], // Bounding box around Dover
-                FiltersShipMMSI: ['210385000'], // Track specific MMSI
+                BoundingBoxes: [[[50.9, 1.7], [51.2, 2.0]]], // Bounding box for Dover-Calais
+                FiltersShipMMSI: ['210385000', '316001245'], // Track primary and fallback MMSI
                 FilterMessageTypes: ['PositionReport']
             };
             ws.send(JSON.stringify(subscription));
+            console.log('Subscription sent:', JSON.stringify(subscription));
         };
 
         ws.onmessage = (event) => {
+            console.log('WebSocket message received:', event.data);
             const data = JSON.parse(event.data);
             if (data.MessageType === 'PositionReport') {
                 const mmsi = data.MetaData.MMSI;
                 const lat = data.Message.PositionReport.Latitude;
                 const lon = data.Message.PositionReport.Longitude;
+                console.log(`Position for MMSI ${mmsi}: Lat ${lat}, Lon ${lon}`);
 
                 // Update or create marker (Markers Only mode, no popups)
                 if (markers[mmsi]) {
@@ -87,30 +91,4 @@
                 const latlngs = track.getLatLngs();
                 latlngs.push([lat, lon]);
                 if (latlngs.length > maxTrackPoints) {
-                    latlngs.shift();
-                }
-                track.setLatLngs(latlngs);
-
-                // Center map on the latest position
-                map.panTo([lat, lon]);
-            }
-        };
-
-        ws.onclose = () => {
-            console.log('WebSocket connection closed. Reconnecting...');
-            setTimeout(() => {
-                const newWs = new WebSocket('wss://stream.aisstream.io/v0/stream');
-                newWs.onopen = ws.onopen;
-                newWs.onmessage = ws.onmessage;
-                newWs.onclose = ws.onclose;
-                newWs.onerror = ws.onerror;
-                ws = newWs;
-            }, 5000);
-        };
-
-        ws.onerror = (error) => {
-            console.error('WebSocket error:', error);
-        };
-    </script>
-</body>
-</html>
+                    latlng
