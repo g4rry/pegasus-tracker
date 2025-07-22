@@ -36,7 +36,7 @@
 
         // Connect to aisstream.io WebSocket
         const ws = new WebSocket('wss://stream.aisstream.io/v0/stream');
-        const apiKey = '93e8cac5265e8237ccec34b777f331c50a950656'; // Replace with your aisstream.io API key
+        const apiKey = 'YOUR_AISSTREAM_API_KEY'; // Replace with your aisstream.io API key
 
         ws.onopen = () => {
             // Subscribe to AIS data for MMSI 232018618
@@ -90,4 +90,14 @@
                 newWs.onopen = ws.onopen;
                 newWs.onmessage = ws.onmessage;
                 newWs.onclose = ws.onclose;
-                newWs.onerror
+                newWs.onerror = ws.onerror;
+                ws = newWs;
+            }, 5000);
+        };
+
+        ws.onerror = (error) => {
+            console.error('WebSocket error:', error);
+        };
+    </script>
+</body>
+</html>
