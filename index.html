@@ -91,4 +91,32 @@
                 const latlngs = track.getLatLngs();
                 latlngs.push([lat, lon]);
                 if (latlngs.length > maxTrackPoints) {
-                    latlng
+                    latlngs.shift();
+                }
+                track.setLatLngs(latlngs);
+
+                // Center map on the latest position
+                map.panTo([lat, lon]);
+            } else {
+                console.log('Non-PositionReport message:', data);
+            }
+        };
+
+        ws.onclose = () => {
+            console.log('WebSocket connection closed. Reconnecting...');
+            setTimeout(() => {
+                const newWs = new WebSocket('wss://stream.aisstream.io/v0/stream');
+                newWs.onopen = ws.onopen;
+                newWs.onmessage = ws.onmessage;
+                newWs.onclose = ws.onclose;
+                newWs.onerror = ws.onerror;
+                ws = newWs;
+            }, 5000);
+        };
+
+        ws.onerror = (error) => {
+            console.error('WebSocket error:', error);
+        };
+    </script>
+</body>
+</html>
