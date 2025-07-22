@@ -42,7 +42,7 @@
 
         // Handle tile loading errors
         seaMapOverlay.on('tileerror', (error, tile) => {
-            console.error('OpenSeaMap tile error:', error, tile);
+            console.error('OpenSeaMap tile error at', new Date().toISOString(), ':', error, tile);
         });
 
         // Store markers and track lines
@@ -56,11 +56,11 @@
 
         ws.onopen = () => {
             console.log('WebSocket connected at', new Date().toISOString());
-            // Subscribe to AIS data for MMSI 227022800
+            // Subscribe to AIS data for MMSI 227022800 (and fallback 316001245)
             const subscription = {
                 ApiKey: apiKey,
-                BoundingBoxes: [[[50.9, 1.7], [51.2, 2.0]]], // Bounding box for Dover-Calais
-                FiltersShipMMSI: ['227022800'], // Track confirmed active MMSI
+                BoundingBoxes: [[[-90, -180], [90, 180]]], // Global bounding box (use [[[50.9, 1.7], [51.2, 2.0]]] for Dover-Calais only)
+                FiltersShipMMSI: ['227022800', '316001245'], // Track confirmed active MMSI and fallback
                 FilterMessageTypes: ['PositionReport']
             };
             ws.send(JSON.stringify(subscription));
@@ -69,7 +69,7 @@
             // Warn if no data received within 30 seconds
             setTimeout(() => {
                 if (Object.keys(markers).length === 0) {
-                    console.warn('No AIS data received after 30 seconds. Check API key, MMSI, or aisstream.io status.');
+                    console.warn('No AIS data received after 30 seconds. Check API key, MMSI activity, or aisstream.io status.');
                 }
             }, 30000);
         };
@@ -84,11 +84,17 @@
                     const lon = data.Message.PositionReport.Longitude;
                     console.log(`Position for MMSI ${mmsi}: Lat ${lat}, Lon ${lon}, Time ${data.MetaData.time_utc}`);
 
-                    // Update or create marker (Markers Only mode, no popups)
+                    // Update or create maroon circle marker (12px diameter, no popup)
                     if (markers[mmsi]) {
                         markers[mmsi].setLatLng([lat, lon]);
                     } else {
-                        markers[mmsi] = L.marker([lat, lon]).addTo(map);
+                        markers[mmsi] = L.circleMarker([lat, lon], {
+                            radius: 6, // 12px diameter
+                            color: '#800000', // Maroon
+                            fillColor: '#800000',
+                            fillOpacity: 0.8,
+                            weight: 2
+                        }).addTo(map);
                     }
 
                     // Update track
@@ -109,7 +115,7 @@
                     console.log('Non-PositionReport message:', data);
                 }
             } catch (error) {
-                console.error('Error parsing WebSocket message:', error, event.data);
+                console.error('Error parsing WebSocket message at', new Date().toISOString(), ':', error, event.data);
             }
         };
 
