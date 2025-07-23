@@ -23,8 +23,8 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Initialize Leaflet map, centered on Dover, England (fallback if no data)
-        const map = L.map('map').setView([51.1279, 1.3134], 12);
+        // Initialize Leaflet map, centered between Dover and Calais
+        const map = L.map('map').setView([51.075, 1.786], 10); // Adjusted to show both Dover and Calais
 
         // Base layer: OpenStreetMap
         const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -57,12 +57,12 @@
 
         ws.onopen = () => {
             console.log('WebSocket connected at', new Date().toISOString());
-            // Subscribe to AIS data for MMSI 227022800 (and fallback 316001245)
+            // Subscribe to AIS data for MMSI 227022800
             const subscription = {
                 ApiKey: apiKey,
                 BoundingBoxes: [[[-90, -180], [90, 180]]], // Global bounding box
-                FiltersShipMMSI: ['227022800', '316001245'], // Track active MMSI and fallback
-                FilterMessageTypes: ['PositionReport']
+                FiltersShipMMSI: ['227022800'], // Track confirmed active MMSI
+                FilterMessageTypes: ['PositionReport', 'StandardClassBPositionReport', 'LongRangeAisBroadcastMessage']
             };
             ws.send(JSON.stringify(subscription));
             console.log('Subscription sent:', JSON.stringify(subscription));
@@ -70,7 +70,7 @@
             // Warn if no data received within 30 seconds
             setTimeout(() => {
                 if (!firstPositionReceived) {
-                    console.warn('No AIS data received after 30 seconds. Check API key, MMSI activity, or aisstream.io status.');
+                    console.warn('No AIS data received after 30 seconds. Check MMSI activity or aisstream.io status.');
                 }
             }, 30000);
         };
@@ -79,44 +79,53 @@
             console.log('WebSocket message received at', new Date().toISOString(), ':', event.data);
             try {
                 const data = JSON.parse(event.data);
-                if (data.MessageType === 'PositionReport') {
-                    const mmsi = data.MetaData.MMSI;
-                    const lat = data.Message.PositionReport.Latitude;
-                    const lon = data.Message.PositionReport.Longitude;
-                    console.log(`Position for MMSI ${mmsi}: Lat ${lat}, Lon ${lon}, Time ${data.MetaData.time_utc}`);
+                let lat, lon, mmsi;
 
-                    // Update or create maroon circle marker (12px diameter, no popup)
-                    if (markers[mmsi]) {
-                        markers[mmsi].setLatLng([lat, lon]);
+                // Handle different AIS message types
+                if (['PositionReport', 'StandardClassBPositionReport', 'LongRangeAisBroadcastMessage'].includes(data.MessageType)) {
+                    mmsi = data.MetaData.MMSI;
+                    lat = data.Message[data.MessageType].Latitude;
+                    lon = data.Message[data.MessageType].Longitude;
+
+                    // Validate coordinates
+                    if (typeof lat === 'number' && typeof lon === 'number' && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {
+                        console.log(`Position for MMSI ${mmsi}: Lat ${lat}, Lon ${lon}, Time ${data.MetaData.time_utc}, Type ${data.MessageType}`);
+
+                        // Update or create maroon circle marker (12px diameter, no popup)
+                        if (markers[mmsi]) {
+                            markers[mmsi].setLatLng([lat, lon]);
+                        } else {
+                            markers[mmsi] = L.circleMarker([lat, lon], {
+                                radius: 6, // 12px diameter
+                                color: '#800000', // Maroon
+                                fillColor: '#800000',
+                                fillOpacity: 0.8,
+                                weight: 2
+                            }).addTo(map);
+                        }
+
+                        // Update track
+                        if (!tracks[mmsi]) {
+                            tracks[mmsi] = L.polyline([], { color: '#0000FF', weight: 2 }).addTo(map);
+                        }
+                        const track = tracks[mmsi];
+                        const latlngs = track.getLatLngs();
+                        latlngs.push([lat, lon]);
+                        if (latlngs.length > maxTrackPoints) {
+                            latlngs.shift();
+                        }
+                        track.setLatLngs(latlngs);
+
+                        // Pan to vessel position on first receipt and subsequent updates
+                        if (!firstPositionReceived || mmsi === '227022800') {
+                            map.panTo([lat, lon]);
+                            firstPositionReceived = true;
+                        }
                     } else {
-                        markers[mmsi] = L.circleMarker([lat, lon], {
-                            radius: 6, // 12px diameter
-                            color: '#800000', // Maroon
-                            fillColor: '#800000',
-                            fillOpacity: 0.8,
-                            weight: 2
-                        }).addTo(map);
-                    }
-
-                    // Update track
-                    if (!tracks[mmsi]) {
-                        tracks[mmsi] = L.polyline([], { color: '#0000FF', weight: 2 }).addTo(map);
-                    }
-                    const track = tracks[mmsi];
-                    const latlngs = track.getLatLngs();
-                    latlngs.push([lat, lon]);
-                    if (latlngs.length > maxTrackPoints) {
-                        latlngs.shift();
-                    }
-                    track.setLatLngs(latlngs);
-
-                    // Pan to vessel position on first receipt and subsequent updates
-                    if (!firstPositionReceived || mmsi === '227022800') {
-                        map.panTo([lat, lon]);
-                        firstPositionReceived = true;
+                        console.warn(`Invalid coordinates for MMSI ${mmsi}: Lat ${lat}, Lon ${lon}, Type ${data.MessageType}`);
                     }
                 } else {
-                    console.log('Non-PositionReport message:', data);
+                    console.log('Non-position message:', data);
                 }
             } catch (error) {
                 console.error('Error parsing WebSocket message at', new Date().toISOString(), ':', error, event.data);
