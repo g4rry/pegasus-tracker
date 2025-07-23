@@ -23,7 +23,7 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Initialize Leaflet map, centered on Dover, England
+        // Initialize Leaflet map, centered on Dover, England (fallback if no data)
         const map = L.map('map').setView([51.1279, 1.3134], 12);
 
         // Base layer: OpenStreetMap
@@ -49,6 +49,7 @@
         const markers = {};
         const tracks = {};
         const maxTrackPoints = 24 * 60; // Approx. 24 hours of 1-minute updates
+        let firstPositionReceived = false; // Track if first position is received
 
         // Connect to aisstream.io WebSocket
         const ws = new WebSocket('wss://stream.aisstream.io/v0/stream');
@@ -59,8 +60,8 @@
             // Subscribe to AIS data for MMSI 227022800 (and fallback 316001245)
             const subscription = {
                 ApiKey: apiKey,
-                BoundingBoxes: [[[-90, -180], [90, 180]]], // Global bounding box (use [[[50.9, 1.7], [51.2, 2.0]]] for Dover-Calais only)
-                FiltersShipMMSI: ['227022800', '316001245'], // Track confirmed active MMSI and fallback
+                BoundingBoxes: [[[-90, -180], [90, 180]]], // Global bounding box
+                FiltersShipMMSI: ['227022800', '316001245'], // Track active MMSI and fallback
                 FilterMessageTypes: ['PositionReport']
             };
             ws.send(JSON.stringify(subscription));
@@ -68,7 +69,7 @@
 
             // Warn if no data received within 30 seconds
             setTimeout(() => {
-                if (Object.keys(markers).length === 0) {
+                if (!firstPositionReceived) {
                     console.warn('No AIS data received after 30 seconds. Check API key, MMSI activity, or aisstream.io status.');
                 }
             }, 30000);
@@ -109,8 +110,11 @@
                     }
                     track.setLatLngs(latlngs);
 
-                    // Center map on the latest position
-                    map.panTo([lat, lon]);
+                    // Pan to vessel position on first receipt and subsequent updates
+                    if (!firstPositionReceived || mmsi === '227022800') {
+                        map.panTo([lat, lon]);
+                        firstPositionReceived = true;
+                    }
                 } else {
                     console.log('Non-PositionReport message:', data);
                 }
