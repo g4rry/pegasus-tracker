@@ -3,150 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live AIS Vessel Tracking - Dover to Calais</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <title>Vessel Tracker - Dover Strait</title>
     <style>
         body {
             margin: 0;
-            padding: 10px;
+            padding: 0;
             font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #f5f5f5;
         }
-        #map {
+        h1 {
+            margin: 20px 0;
+            color: #333;
+        }
+        .map-container {
             width: 100%;
-            height: 900px;
+            max-width: 900px;
+            height: 500px;
+            border: 1px solid #ccc;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
     </style>
 </head>
 <body>
-    <h1>Live Vessel Tracking - Dover to Calais</h1>
-    <div id="map"></div>
-
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script>
-        // Initialize Leaflet map, centered between Dover and Calais
-        const map = L.map('map').setView([51.075, 1.786], 10); // Adjusted to show both Dover and Calais
-
-        // Base layer: OpenStreetMap
-        const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-            maxZoom: 19
-        }).addTo(map);
-
-        // Nautical chart overlay: OpenSeaMap
-        const seaMapOverlay = L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png', {
-            attribution: '© <a href="http://www.openseamap.org">OpenSeaMap</a> contributors',
-            maxZoom: 19,
-            opacity: 0.8,
-            errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFhAJ/wlseKgAAAABJRU5ErkJggg==' // Transparent fallback
-        }).addTo(map);
-
-        // Handle tile loading errors
-        seaMapOverlay.on('tileerror', (error, tile) => {
-            console.error('OpenSeaMap tile error at', new Date().toISOString(), ':', error, tile);
-        });
-
-        // Store markers and track lines
-        const markers = {};
-        const tracks = {};
-        const maxTrackPoints = 24 * 60; // Approx. 24 hours of 1-minute updates
-        let firstPositionReceived = false; // Track if first position is received
-
-        // Connect to aisstream.io WebSocket
-        const ws = new WebSocket('wss://stream.aisstream.io/v0/stream');
-        const apiKey = '41c24b15f1ef840dead484ddca67daf39246150d';
-
-        ws.onopen = () => {
-            console.log('WebSocket connected at', new Date().toISOString());
-            // Subscribe to AIS data for MMSI 227022800
-            const subscription = {
-                ApiKey: apiKey,
-                BoundingBoxes: [[[-90, -180], [90, 180]]], // Global bounding box
-                FiltersShipMMSI: ['227022800'], // Track confirmed active MMSI
-                FilterMessageTypes: ['PositionReport', 'StandardClassBPositionReport', 'LongRangeAisBroadcastMessage']
-            };
-            ws.send(JSON.stringify(subscription));
-            console.log('Subscription sent:', JSON.stringify(subscription));
-
-            // Warn if no data received within 30 seconds
-            setTimeout(() => {
-                if (!firstPositionReceived) {
-                    console.warn('No AIS data received after 30 seconds. Check MMSI activity or aisstream.io status.');
-                }
-            }, 30000);
-        };
-
-        ws.onmessage = (event) => {
-            console.log('WebSocket message received at', new Date().toISOString(), ':', event.data);
-            try {
-                const data = JSON.parse(event.data);
-                let lat, lon, mmsi;
-
-                // Handle different AIS message types
-                if (['PositionReport', 'StandardClassBPositionReport', 'LongRangeAisBroadcastMessage'].includes(data.MessageType)) {
-                    mmsi = data.MetaData.MMSI;
-                    lat = data.Message[data.MessageType].Latitude;
-                    lon = data.Message[data.MessageType].Longitude;
-
-                    // Validate coordinates
-                    if (typeof lat === 'number' && typeof lon === 'number' && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {
-                        console.log(`Position for MMSI ${mmsi}: Lat ${lat}, Lon ${lon}, Time ${data.MetaData.time_utc}, Type ${data.MessageType}`);
-
-                        // Update or create maroon circle marker (12px diameter, no popup)
-                        if (markers[mmsi]) {
-                            markers[mmsi].setLatLng([lat, lon]);
-                        } else {
-                            markers[mmsi] = L.circleMarker([lat, lon], {
-                                radius: 6, // 12px diameter
-                                color: '#800000', // Maroon
-                                fillColor: '#800000',
-                                fillOpacity: 0.8,
-                                weight: 2
-                            }).addTo(map);
-                        }
-
-                        // Update track
-                        if (!tracks[mmsi]) {
-                            tracks[mmsi] = L.polyline([], { color: '#0000FF', weight: 2 }).addTo(map);
-                        }
-                        const track = tracks[mmsi];
-                        const latlngs = track.getLatLngs();
-                        latlngs.push([lat, lon]);
-                        if (latlngs.length > maxTrackPoints) {
-                            latlngs.shift();
-                        }
-                        track.setLatLngs(latlngs);
-
-                        // Pan to vessel position on first receipt and subsequent updates
-                        if (!firstPositionReceived || mmsi === '227022800') {
-                            map.panTo([lat, lon]);
-                            firstPositionReceived = true;
-                        }
-                    } else {
-                        console.warn(`Invalid coordinates for MMSI ${mmsi}: Lat ${lat}, Lon ${lon}, Type ${data.MessageType}`);
-                    }
-                } else {
-                    console.log('Non-position message:', data);
-                }
-            } catch (error) {
-                console.error('Error parsing WebSocket message at', new Date().toISOString(), ':', error, event.data);
-            }
-        };
-
-        ws.onclose = () => {
-            console.log('WebSocket connection closed at', new Date().toISOString(), '. Reconnecting...');
-            setTimeout(() => {
-                const newWs = new WebSocket('wss://stream.aisstream.io/v0/stream');
-                newWs.onopen = ws.onopen;
-                newWs.onmessage = ws.onmessage;
-                newWs.onclose = ws.onclose;
-                newWs.onerror = ws.onerror;
-                ws = newWs;
-            }, 5000);
-        };
-
-        ws.onerror = (error) => {
-            console.error('WebSocket error at', new Date().toISOString(), ':', error);
-        };
-    </script>
+    <h1>Vessel Tracker: MMSI 232018618</h1>
+    <div class="map-container">
+        <script type="text/javascript">
+            // Map appearance
+            var width="100%";         // width in pixels or percentage
+            var height="500";         // height in pixels (adjusted from 0 to display map)
+            var latitude="51.0";      // center latitude (decimal degrees)
+            var longitude="1.1";      // center longitude (decimal degrees)
+            var zoom="5";             // initial zoom (between 3 and 18)
+            var names=false;          // always show ship names (defaults to false)
+            // Single ship tracking
+            var mmsi="232018618";     // display latest position (MMSI)
+            var show_track=true;      // display track line (last 24 hours)
+        </script>
+        <script type="text/javascript" src="https://www.vesselfinder.com/aismap.js"></script>
+    </div>
 </body>
 </html>
